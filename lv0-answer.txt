@@ -1,0 +1,7 @@
+1. const string& 避免对输入的string意外的修改以及节省内存  同时与Tokenizer的构造函数保持一致
+目前改成string& 理论上应该是可以的?  但肯定是不够安全  以及该成果string&后是左值引用了  无法传入一个临时的字符串
+2. Tokenptr是c++11后引入的智能指针   可以自动管理内存  自动delete掉   明确独自的所有权   同时在tokenize函数中可以通过move自动使用移动语义移到tokens中 避免不必要的复制
+改用Token* 显然要在内存管理上花很多心思
+3. 重载了operator<<  调用token.toString()；
+4. 使用try catch  throw
+5. deque作为队列先进先出  避免不必要的错误  速度更快
