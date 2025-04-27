@@ -54,3 +54,48 @@ std::string PairValue::toString() const {
     }
     return str;
 }
+
+
+bool Value::isSelfEvaluating() const {
+    return true;
+}
+bool BooleanValue::isSelfEvaluating() const {
+    return true;
+}
+bool NumericValue::isSelfEvaluating() const {
+    return true;
+}
+bool StringValue::isSelfEvaluating() const {
+    return true;
+}
+bool NilValue::isSelfEvaluating() const {
+    return false;
+}
+bool SymbolValue::isSelfEvaluating() const {
+    return false;
+}
+bool PairValue::isSelfEvaluating() const {
+    return false;
+}
+
+bool Value::isNil() const {
+    return true;
+}
+bool BooleanValue::isNil() const {
+    return false;
+}
+bool NumericValue::isNil() const {
+    return false;
+}
+bool StringValue::isNil() const {
+    return false;
+}
+bool NilValue::isNil() const {
+    return true;
+}
+bool SymbolValue::isNil() const {
+    return false;
+}
+bool PairValue::isNil() const {
+    return false;
+}
