@@ -3,15 +3,22 @@
 #define VALUE_H
 #include<string>
 #include<memory>
+#include<optional>
+#include<vector>
+class Value;
+using ValuePtr = std::shared_ptr<Value>;
+
 class Value {
 public:
     virtual ~Value() {};
     virtual std::string toString() const;
-    virtual bool isSelfEvaluating() const;
-    virtual bool isNil() const;
+    static bool isSelfEvaluating(const ValuePtr& v);
+    static bool isNil(const ValuePtr& v);
+    static bool isSymbol(const ValuePtr& v);
+    static bool isList(const ValuePtr& v);
+    static std::vector<ValuePtr> toVec(const ValuePtr& v);
+    static std::optional<std::string> asSymbol(const ValuePtr& v);
 };
-
-using ValuePtr = std::shared_ptr<Value>;
 
 class BooleanValue : public Value {
 private:
@@ -20,8 +27,6 @@ private:
 public:
     BooleanValue(bool v) : Value(), value{v} {};
     std::string toString() const override;
-    bool isSelfEvaluating() const override;
-    bool isNil() const override;
 };
 class NumericValue :public Value {
 private:
@@ -30,8 +35,6 @@ private:
 public:
     NumericValue(double v) : Value(), value(v) {};
     std::string toString() const override;
-    bool isSelfEvaluating() const override;
-    bool isNil() const override;
 };
 class StringValue : public Value {
 private:
@@ -40,15 +43,11 @@ private:
 public:
     StringValue(std::string v) : Value(), value{v} {};
     std::string toString() const override;
-    bool isSelfEvaluating() const override;
-    bool isNil() const override;
 };
 class NilValue : public Value {
 public:
     NilValue():Value() {};
     std::string toString() const override;
-    bool isSelfEvaluating() const override;
-    bool isNil() const override;
 };
 class SymbolValue : public Value {
 private:
@@ -57,8 +56,7 @@ private:
 public:
     SymbolValue(std::string n) : Value(), name(n) {};
     std::string toString() const override;
-    bool isSelfEvaluating() const override;
-    bool isNil() const override;
+    std::string get_name() const;
 };
 class PairValue : public Value {
 private:
@@ -69,8 +67,8 @@ public:
     PairValue(ValuePtr l, ValuePtr r)
         : Value(), left{l}, right{r} {};
     std::string toString() const override;
-    bool isSelfEvaluating() const override;
-    bool isNil() const override;
+    ValuePtr get_cdr() const;
+    ValuePtr get_car() const;
 };
 
 #endif

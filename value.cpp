@@ -1,6 +1,7 @@
 #include"value.h"
 #include<iomanip>
 #include<sstream>
+#include"error.h"
 std::string Value::toString() const {
     return "";
 }
@@ -35,14 +36,13 @@ std::string PairValue::toString() const {
     std::string str{"("};
     ValuePtr rn{right};
     ValuePtr ln{left};
-    while (typeid(*rn) == typeid(PairValue)) {
+    while (auto pair = dynamic_cast<const PairValue*>(rn.get())) {
         str += ln->toString();
         str += " ";
-        auto& pair = static_cast<const PairValue&>(*rn);
-        rn = pair.right;
-        ln = pair.left;
+        rn = pair->right;
+        ln = pair->left;
     }
-    if (typeid(*rn) == typeid(NilValue)) {
+    if (auto pair = dynamic_cast<NilValue*>(rn.get())) {
         str += ln->toString();
         str += ")";
     }
@@ -54,48 +54,76 @@ std::string PairValue::toString() const {
     }
     return str;
 }
-
-
-bool Value::isSelfEvaluating() const {
-    return true;
-}
-bool BooleanValue::isSelfEvaluating() const {
-    return true;
-}
-bool NumericValue::isSelfEvaluating() const {
-    return true;
-}
-bool StringValue::isSelfEvaluating() const {
-    return true;
-}
-bool NilValue::isSelfEvaluating() const {
-    return false;
-}
-bool SymbolValue::isSelfEvaluating() const {
-    return false;
-}
-bool PairValue::isSelfEvaluating() const {
-    return false;
+std::string SymbolValue::get_name() const {
+    return name;
 }
 
-bool Value::isNil() const {
+ValuePtr PairValue::get_cdr() const {
+    return right;
+}
+ValuePtr PairValue::get_car() const {
+    return left;
+}
+
+
+bool Value::isSelfEvaluating(const ValuePtr& v) {
+    if (typeid(*v) == typeid(BooleanValue) ||
+        typeid(*v) == typeid(NumericValue) || 
+        typeid(*v) == typeid(StringValue)) {
+    
     return true;
+    } else {
+        return false;
+    }
 }
-bool BooleanValue::isNil() const {
-    return false;
+bool Value::isNil(const ValuePtr& v) {
+    if (typeid(*v)==typeid(NilValue)){
+        return true;
+    }
+    else return false;
 }
-bool NumericValue::isNil() const {
-    return false;
+bool Value::isSymbol(const ValuePtr& v) {
+    if (typeid(*v)==typeid(SymbolValue)){
+        return true;
+    }
+    else return false;
 }
-bool StringValue::isNil() const {
-    return false;
+bool Value::isList(const ValuePtr& v) {
+    if (auto pair = dynamic_cast<PairValue*>(v.get())) {
+        auto current = pair->get_cdr();
+        while (true) {
+            if (dynamic_cast<NilValue*>(current.get())) {
+                return true;
+            }
+            if (auto next = dynamic_cast<PairValue*>(current.get())) {
+                current = next->get_cdr();
+            } else {
+            return false;
+            }
+        }
+    }
+    else return false;
 }
-bool NilValue::isNil() const {
-    return true;
+
+std::vector<ValuePtr> Value::toVec(const ValuePtr& v) {
+    std::vector<ValuePtr>ans;
+    auto pair = dynamic_cast<PairValue*>(v.get());
+    auto current = pair->get_cdr();
+    ans.push_back(pair->get_car());
+    while (true){
+        if (dynamic_cast<NilValue*>(current.get())) {
+            return ans;
+        }
+        if (auto next = dynamic_cast<PairValue*>(current.get())) {
+            ans.push_back(next->get_car());
+            current = next->get_cdr();
+        }
+    }
+    throw SyntaxError("The list is not right.");
 }
-bool SymbolValue::isNil() const {
-    return false;
-}
-bool PairValue::isNil() const {
-    return false;
+std::optional<std::string> Value::asSymbol(const ValuePtr& v) {
+    if (auto symbol = dynamic_cast<SymbolValue*>(v.get())) {
+        return std::optional<std::string>(symbol->get_name());
+    }
+    else return std::nullopt;
 }
