@@ -1,6 +1,16 @@
 #include"eval_env.h"
 #include"error.h"
 #include<set>
+#include"builtin.h"
+#include<algorithm>
+#include<iterator>
+
+EvalEnv::EvalEnv(){
+    Builtin built;
+    for (auto& it:built.builtin_map){
+        map.insert({it.first,it.second});
+    }
+}
 
 ValuePtr EvalEnv::eval(ValuePtr expr){
     if (expr->isSelfEvaluating(expr)) {
@@ -9,11 +19,11 @@ ValuePtr EvalEnv::eval(ValuePtr expr){
     else if (expr->isNil(expr)) {
         throw LispError("Evaluating nil is prohibited.");
     } 
-    else if (expr->isList(expr)) {
-        return eval_list(expr);
-    }
     else if (expr->isSymbol(expr)) {
         return eval_symbol(expr);
+    }
+    else if (expr->isList(expr)) {
+        return eval_list(expr);
     }
     else {
         throw LispError("Unimplemented");
@@ -27,31 +37,19 @@ ValuePtr EvalEnv::eval_list(ValuePtr expr) {
         if (auto name = v[1]->asSymbol(v[1])) {
             ValuePtr current_expr = v[2];
             std::set<std::string> visited;
-            while (true) {
-                auto current_name = current_expr->asSymbol(current_expr);
-                if (!current_name) {
-                    break;
-                }
-                if (visited.count(current_name.value())) {
-                    throw LispError("Circular reference detected for symbol: " +
-                                    *current_name);
-                }
-                visited.insert(current_name.value());
-                auto it = map.find(current_name.value());
-                if (it == map.end()) {
-                    throw LispError("Variable " + *current_name +
-                                    " not defined.");
-                }
-                current_expr = it->second;
-            }
+            current_expr = checkVal(current_expr);
             map[name.value()] = current_expr;
         }
         return std::make_shared<NilValue>();
-    }
-    else {
-        throw LispError("Malformed define.");
+    }else {
+        ValuePtr proc = this->eval(v[0]);
+        auto pair = dynamic_cast<PairValue*>(expr.get());
+        auto cdr = pair->get_cdr();
+        std::vector<ValuePtr> args = this->evalList(cdr);
+        return this->apply(proc,args);
     }
 }
+
 ValuePtr EvalEnv::eval_symbol(ValuePtr expr) {
     if (auto name = expr->asSymbol(expr)) {
         if (auto it = map.find(name.value());it!=map.end()) {
@@ -62,4 +60,28 @@ ValuePtr EvalEnv::eval_symbol(ValuePtr expr) {
     } else {
         throw SyntaxError("It is not a symbol.");
     }
+}
+
+std::vector<ValuePtr> EvalEnv::evalList(ValuePtr expr) {
+    std::vector<ValuePtr> result;
+    std::ranges::transform(expr->toVec(expr), std::back_inserter(result),
+                           [this](ValuePtr v) { return this->eval(v); });
+    return result;
+}
+ValuePtr EvalEnv::apply(ValuePtr proc, std::vector<ValuePtr>args) {
+    if (auto pro = dynamic_cast<BuiltinProcValue*>(proc.get())) {
+        auto func = pro->getFunc();
+        return func(args);
+    }
+    else {
+        throw LispError("Unimplemented");
+    }
+}
+
+//我需要这个函数的定位是传入一个任意类型的ValuePtr   传出一个SelfEvaluating的ValuePtr
+ValuePtr EvalEnv::checkVal(ValuePtr expr) {
+    while (!expr->isSelfEvaluating(expr)&&(!expr->isBuiltin(expr))&&(!expr->isNil(expr))){
+        expr = eval(expr);
+    }
+    return expr;
 }

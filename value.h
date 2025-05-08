@@ -5,6 +5,7 @@
 #include<memory>
 #include<optional>
 #include<vector>
+#include<functional>
 class Value;
 using ValuePtr = std::shared_ptr<Value>;
 
@@ -16,8 +17,13 @@ public:
     static bool isNil(const ValuePtr& v);
     static bool isSymbol(const ValuePtr& v);
     static bool isList(const ValuePtr& v);
+    static bool isNumber(const ValuePtr& v);
+    static bool isBuiltin(const ValuePtr& v);
+    static bool isString(const ValuePtr& v);
     static std::vector<ValuePtr> toVec(const ValuePtr& v);
-    static std::optional<std::string> asSymbol(const ValuePtr& v);
+    virtual std::optional<std::string> asSymbol(const ValuePtr& v);
+    virtual double asNumber(const ValuePtr& v) const;
+    virtual std::string asString(const ValuePtr& v) const;
 };
 
 class BooleanValue : public Value {
@@ -35,6 +41,7 @@ private:
 public:
     NumericValue(double v) : Value(), value(v) {};
     std::string toString() const override;
+    double asNumber(const ValuePtr& v) const override;
 };
 class StringValue : public Value {
 private:
@@ -43,6 +50,7 @@ private:
 public:
     StringValue(std::string v) : Value(), value{v} {};
     std::string toString() const override;
+    std::string asString(const ValuePtr& v) const override;
 };
 class NilValue : public Value {
 public:
@@ -56,7 +64,7 @@ private:
 public:
     SymbolValue(std::string n) : Value(), name(n) {};
     std::string toString() const override;
-    std::string get_name() const;
+    std::optional<std::string> asSymbol(const ValuePtr& v) override;
 };
 class PairValue : public Value {
 private:
@@ -69,6 +77,17 @@ public:
     std::string toString() const override;
     ValuePtr get_cdr() const;
     ValuePtr get_car() const;
+};
+
+using BultinFuncType = ValuePtr(const std::vector<ValuePtr>&);
+
+class BuiltinProcValue : public Value {  
+private:  
+   BultinFuncType* func;  
+public:  
+   BuiltinProcValue(BultinFuncType* f) : Value(), func(f) {};
+   std::string toString() const override;  
+   BultinFuncType* getFunc() const;
 };
 
 #endif

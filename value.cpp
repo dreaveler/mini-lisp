@@ -54,10 +54,6 @@ std::string PairValue::toString() const {
     }
     return str;
 }
-std::string SymbolValue::get_name() const {
-    return name;
-}
-
 ValuePtr PairValue::get_cdr() const {
     return right;
 }
@@ -65,6 +61,15 @@ ValuePtr PairValue::get_car() const {
     return left;
 }
 
+std::string StringValue::asString(const ValuePtr& V) const {
+    return value;
+}
+std::string Value::asString(const ValuePtr& v) const {
+    if (auto string = dynamic_cast<StringValue*>(v.get())) {
+        return string->asString(v);
+    }
+    throw LispError("Should be a string.");
+}
 
 bool Value::isSelfEvaluating(const ValuePtr& v) {
     if (typeid(*v) == typeid(BooleanValue) ||
@@ -81,6 +86,11 @@ bool Value::isNil(const ValuePtr& v) {
         return true;
     }
     else return false;
+}
+bool Value::isNumber(const ValuePtr& v) {
+    if (typeid(*v) == typeid(NumericValue)) {
+        return true;
+    }else return false;
 }
 bool Value::isSymbol(const ValuePtr& v) {
     if (typeid(*v)==typeid(SymbolValue)){
@@ -104,9 +114,23 @@ bool Value::isList(const ValuePtr& v) {
     }
     else return false;
 }
-
+bool Value::isBuiltin(const ValuePtr& v){
+    if (typeid(*v) == typeid(BuiltinProcValue)){
+        return true;
+    }
+    return false;
+}
+bool Value::isString(const ValuePtr& v) {
+    if (typeid(*v) == typeid(StringValue)) {
+        return true;    
+    }
+    return false;
+}
 std::vector<ValuePtr> Value::toVec(const ValuePtr& v) {
     std::vector<ValuePtr>ans;
+    if (typeid(*v) == typeid(NilValue)) {
+        return ans;
+    }
     auto pair = dynamic_cast<PairValue*>(v.get());
     auto current = pair->get_cdr();
     ans.push_back(pair->get_car());
@@ -123,7 +147,26 @@ std::vector<ValuePtr> Value::toVec(const ValuePtr& v) {
 }
 std::optional<std::string> Value::asSymbol(const ValuePtr& v) {
     if (auto symbol = dynamic_cast<SymbolValue*>(v.get())) {
-        return std::optional<std::string>(symbol->get_name());
+        return symbol->asSymbol(v);
     }
     else return std::nullopt;
+}
+std::optional<std::string> SymbolValue::asSymbol(const ValuePtr& v) {
+    return std::optional<std::string>(name);
+}
+double Value::asNumber(const ValuePtr& v) const {
+    if (auto number = dynamic_cast<NumericValue*>(v.get())){
+        return number->asNumber(v);
+    }
+    throw SyntaxError("Should get a number.");
+}
+double NumericValue::asNumber(const ValuePtr& v) const {
+    return value;
+}
+std::string BuiltinProcValue::toString() const {
+    return "#<procedure>";
+}
+
+BultinFuncType* BuiltinProcValue::getFunc() const {
+    return func;
 }
