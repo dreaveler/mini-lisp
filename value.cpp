@@ -2,6 +2,7 @@
 #include<iomanip>
 #include<sstream>
 #include"error.h"
+#include"builtin.h"
 std::string Value::toString() const {
     return "";
 }
@@ -126,6 +127,13 @@ bool Value::isString(const ValuePtr& v) {
     }
     return false;
 }
+bool Value::isPair(const ValuePtr& v) {
+    if (typeid(*v) == typeid(PairValue)) {
+        return true;
+    } 
+    return false;
+}
+
 std::vector<ValuePtr> Value::toVec(const ValuePtr& v) {
     std::vector<ValuePtr>ans;
     if (typeid(*v) == typeid(NilValue)) {
@@ -169,4 +177,20 @@ std::string BuiltinProcValue::toString() const {
 
 BultinFuncType* BuiltinProcValue::getFunc() const {
     return func;
+}
+
+bool BuiltinProcValue::isTypeCheck() const {
+    if (func==builtin::isAtom||
+        func==builtin::isBoolean||
+        func==builtin::isInteger||
+        func==builtin::isList||
+        func==builtin::isNull||
+        func==builtin::isNumber||
+        func==builtin::isPair||
+        func==builtin::isProcedure||
+        func==builtin::isString||
+        func==builtin::isSymbol){
+            return true;
+        }
+    return false;
 }

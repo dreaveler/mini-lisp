@@ -24,6 +24,9 @@ ValuePtr EvalEnv::eval(ValuePtr expr){
     }
     else if (expr->isList(expr)) {
         return eval_list(expr);
+    } 
+    else if (expr->isPair(expr)) {
+        return expr;
     }
     else {
         throw LispError("Unimplemented");
@@ -36,12 +39,11 @@ ValuePtr EvalEnv::eval_list(ValuePtr expr) {
     if (v[0]->asSymbol(v[0]) == "define"s){
         if (auto name = v[1]->asSymbol(v[1])) {
             ValuePtr current_expr = v[2];
-            std::set<std::string> visited;
             current_expr = checkVal(current_expr);
             map[name.value()] = current_expr;
         }
         return std::make_shared<NilValue>();
-    }else {
+    } else {
         ValuePtr proc = this->eval(v[0]);
         auto pair = dynamic_cast<PairValue*>(expr.get());
         auto cdr = pair->get_cdr();
@@ -49,6 +51,7 @@ ValuePtr EvalEnv::eval_list(ValuePtr expr) {
         return this->apply(proc,args);
     }
 }
+//如果是类型检查库就不改变原有格式直接传入？？
 
 ValuePtr EvalEnv::eval_symbol(ValuePtr expr) {
     if (auto name = expr->asSymbol(expr)) {
@@ -80,8 +83,13 @@ ValuePtr EvalEnv::apply(ValuePtr proc, std::vector<ValuePtr>args) {
 
 //我需要这个函数的定位是传入一个任意类型的ValuePtr   传出一个SelfEvaluating的ValuePtr
 ValuePtr EvalEnv::checkVal(ValuePtr expr) {
-    while (!expr->isSelfEvaluating(expr)&&(!expr->isBuiltin(expr))&&(!expr->isNil(expr))){
+    while (true){
+        if (expr->isSelfEvaluating(expr)||
+            expr->isBuiltin(expr)||
+            expr->isNil(expr)||
+            (!expr->isList(expr)) && (expr->isPair(expr))) {
+            return expr;
+        }
         expr = eval(expr);
     }
-    return expr;
 }

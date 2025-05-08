@@ -20,6 +20,7 @@ public:
     static bool isNumber(const ValuePtr& v);
     static bool isBuiltin(const ValuePtr& v);
     static bool isString(const ValuePtr& v);
+    static bool isPair(const ValuePtr& v);
     static std::vector<ValuePtr> toVec(const ValuePtr& v);
     virtual std::optional<std::string> asSymbol(const ValuePtr& v);
     virtual double asNumber(const ValuePtr& v) const;
@@ -88,6 +89,7 @@ public:
    BuiltinProcValue(BultinFuncType* f) : Value(), func(f) {};
    std::string toString() const override;  
    BultinFuncType* getFunc() const;
+   bool isTypeCheck() const;
 };
 
 #endif
