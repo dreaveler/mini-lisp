@@ -43,13 +43,13 @@ ValuePtr EvalEnv::eval_list(ValuePtr expr) {
             map[name.value()] = current_expr;
         }
         return std::make_shared<NilValue>();
-    } else {
-        ValuePtr proc = this->eval(v[0]);
+    } else if (auto proc = this->eval(v[0]);proc->isBuiltin(proc)) {
         auto pair = dynamic_cast<PairValue*>(expr.get());
         auto cdr = pair->get_cdr();
         std::vector<ValuePtr> args = this->evalList(cdr);
         return this->apply(proc,args);
     }
+    else return expr;
 }
 //如果是类型检查库就不改变原有格式直接传入？？
 

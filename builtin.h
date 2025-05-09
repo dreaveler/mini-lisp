@@ -11,9 +11,9 @@ public:
 };
 
 namespace builtin {
-    bool isOneParam(const std::vector<ValuePtr>& params);
-    bool isZeroParam(const std::vector<ValuePtr>& params);
-    ValuePtr add(const std::vector<ValuePtr>& params);
+    //工具函数
+    std::vector<double> checkAndGetTwoNums(const std::vector<ValuePtr>& params);
+    double checkAndGetOneNum(const std::vector<ValuePtr>& params);
     //核心库
     ValuePtr print(const std::vector<ValuePtr>& params);
     ValuePtr display(const std::vector<ValuePtr>& params);
@@ -31,6 +31,32 @@ namespace builtin {
     ValuePtr isProcedure(const std::vector<ValuePtr>& params);
     ValuePtr isString(const std::vector<ValuePtr>& params);
     ValuePtr isSymbol(const std::vector<ValuePtr>& params);
+    //对子与列表操作库
+    ValuePtr cdr(const std::vector<ValuePtr>& params);
+    ValuePtr car(const std::vector<ValuePtr>& params);
+    ValuePtr cons(const std::vector<ValuePtr>& params);
+    ValuePtr length(const std::vector<ValuePtr>& params);
+    ValuePtr list(const std::vector<ValuePtr>& params);
+    ValuePtr append(const std::vector<ValuePtr>& params);
+    //算数运算库
+    ValuePtr add(const std::vector<ValuePtr>& params);
+    ValuePtr minus(const std::vector<ValuePtr>& params);
+    ValuePtr plus(const std::vector<ValuePtr>& params);
+    ValuePtr divide(const std::vector<ValuePtr>& params);
+    ValuePtr abs(const std::vector<ValuePtr>& params);
+    ValuePtr expt(const std::vector<ValuePtr>& params);
+    ValuePtr quotient(const std::vector<ValuePtr>& params);
+    ValuePtr modulo(const std::vector<ValuePtr>& params);
+    ValuePtr remainder(const std::vector<ValuePtr>& params);
+    //比较库
+    ValuePtr equ(const std::vector<ValuePtr>& params);
+    ValuePtr less(const std::vector<ValuePtr>& params);
+    ValuePtr larger(const std::vector<ValuePtr>& params);
+    ValuePtr lesse(const std::vector<ValuePtr>& params);
+    ValuePtr largere(const std::vector<ValuePtr>& params);
+    ValuePtr even(const std::vector<ValuePtr>& params);
+    ValuePtr odd(const std::vector<ValuePtr>& params);
+    ValuePtr zero(const std::vector<ValuePtr>& params);
     }
 
 #endif  
