@@ -7,7 +7,7 @@
 #include "eval_env.h"
 #include "rjsj_test.hpp"
 struct TestCtx {
-    EvalEnv env;
+    EvalEnv env{ EvalEnv(nullptr)};
     std::string eval(std::string input) {
         auto tokens = Tokenizer::tokenize(input);
         Parser parser(std::move(tokens));
@@ -19,7 +19,8 @@ struct TestCtx {
 
 
 int main() {
-    EvalEnv env;
+    RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv5Extra);
+    EvalEnv env(nullptr);
     while (true) {
         try {
             std::cout << ">>> ";

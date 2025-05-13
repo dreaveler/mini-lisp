@@ -5,6 +5,10 @@
 #include <string>
 
 #include "./token.h"
+#include <cctype>
+#include <set>
+#include <stdexcept>
+#include "./error.h"
 
 class Tokenizer {
 private:

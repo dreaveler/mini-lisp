@@ -4,8 +4,9 @@
 #include"builtin.h"
 #include<algorithm>
 #include<iterator>
+#include"forms.h"
 
-EvalEnv::EvalEnv(){
+EvalEnv::EvalEnv(std::shared_ptr<EvalEnv>(parent)=nullptr):parent(parent){
     Builtin built;
     for (auto& it:built.builtin_map){
         map.insert({it.first,it.second});
@@ -36,18 +37,16 @@ ValuePtr EvalEnv::eval(ValuePtr expr){
 ValuePtr EvalEnv::eval_list(ValuePtr expr) {
     using namespace std::literals;
     auto v = expr->toVec(expr);
-    if (v[0]->asSymbol(v[0]) == "define"s){
-        if (auto name = v[1]->asSymbol(v[1])) {
-            ValuePtr current_expr = v[2];
-            current_expr = checkVal(current_expr);
-            map[name.value()] = current_expr;
-        }
-        return std::make_shared<NilValue>();
+    auto pair = dynamic_cast<PairValue*>(expr.get());
+    auto car = pair->get_car();
+    auto cdr = pair->get_cdr();
+    if (auto name = car->asSymbol(car);SPECIAL_FORMS.contains(*name)) {
+            return SPECIAL_FORMS.at(*name)(cdr->toVec(cdr), *this);
     } else if (auto proc = this->eval(v[0]);proc->isBuiltin(proc)) {
-        auto pair = dynamic_cast<PairValue*>(expr.get());
-        auto cdr = pair->get_cdr();
         std::vector<ValuePtr> args = this->evalList(cdr);
         return this->apply(proc,args);
+    } else if (auto name = car->asSymbol(car);map.contains(*name)) {
+        throw LispError("Unimplemented");
     }
     else return expr;
 }
@@ -87,9 +86,15 @@ ValuePtr EvalEnv::checkVal(ValuePtr expr) {
         if (expr->isSelfEvaluating(expr)||
             expr->isBuiltin(expr)||
             expr->isNil(expr)||
-            (!expr->isList(expr)) && (expr->isPair(expr))) {
+            (!expr->isList(expr)) && (expr->isPair(expr))||
+            expr->isLambda(expr)) {
             return expr;
         }
         expr = eval(expr);
     }
 }
+
+void EvalEnv::add_contents(std::string str, ValuePtr expr) {
+    map[str] = expr;
+}
+

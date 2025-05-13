@@ -2,6 +2,8 @@
 #include "error.h"
 #include <iostream>
 
+
+
 Parser::Parser(std::deque<TokenPtr> tokens) : tokens{std::move(tokens)} {}
 ValuePtr Parser::parse() {
     auto token = std::move(tokens.front());
@@ -26,14 +28,14 @@ ValuePtr Parser::parse() {
         return this->parseTails();
     }
     else if (token->getType() == TokenType::QUOTE) {
-        return parser::vec2pair({std::make_shared<SymbolValue>("quote"), this->parse()});
+        return vec2pair({std::make_shared<SymbolValue>("quote"), this->parse()});
     } 
     else if (token->getType() == TokenType::QUASIQUOTE) {
-        return parser::vec2pair(
+        return vec2pair(
             {std::make_shared<SymbolValue>("quasiquote"), this->parse()});
     } 
     else if (token->getType() == TokenType::UNQUOTE) {
-        return parser::vec2pair(
+        return vec2pair(
             {std::make_shared<SymbolValue>("unquote"), this->parse()});
     }
     throw SyntaxError("Unimplemented");
@@ -62,12 +64,4 @@ ValuePtr Parser::parseTails() {
     catch (const std::out_of_range& e) {
         std::cerr << e.what() << '\n';
     }
-}
-
-ValuePtr parser::vec2pair(std::vector<ValuePtr> v) {
-    if (v.empty()) {
-        return std::make_shared<NilValue>();
-    }
-    return std::make_shared<PairValue>(
-        v[0], vec2pair(std::vector<ValuePtr>(v.begin() + 1, v.end())));
 }

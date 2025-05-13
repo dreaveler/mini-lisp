@@ -4,9 +4,10 @@
 
 #include"token.h"
 #include"value.h"
-
+#include"utils.hpp"
 #include<deque>
-#include<vector>
+#include <iostream>
+
 class Parser {
 private:
     std::deque<TokenPtr> tokens;
@@ -16,9 +17,5 @@ public:
     ValuePtr parse();
     ValuePtr parseTails();
 };
-
-namespace parser {
-    ValuePtr vec2pair(std::vector<ValuePtr> v);
-}
 
 #endif

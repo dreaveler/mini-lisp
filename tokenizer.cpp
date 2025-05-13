@@ -3,9 +3,7 @@
 #include <cctype>
 #include <set>
 #include <stdexcept>
-
 #include "./error.h"
-
 const std::set<char> TOKEN_END{'(', ')', '\'', '`', ',', '"'};
 
 TokenPtr Tokenizer::nextToken(int& pos) {

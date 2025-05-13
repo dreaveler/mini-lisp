@@ -1,6 +1,5 @@
 #include"value.h"
 #include<iomanip>
-#include<sstream>
 #include"error.h"
 #include"builtin.h"
 std::string Value::toString() const {
@@ -73,10 +72,9 @@ std::string Value::asString(const ValuePtr& v) const {
 }
 
 bool Value::isSelfEvaluating(const ValuePtr& v) {
-    if (typeid(*v) == typeid(BooleanValue) ||
-        typeid(*v) == typeid(NumericValue) || 
-        typeid(*v) == typeid(StringValue)) {
-    
+    if (isBoolean(v) ||
+        isNumber(v)|| 
+        isString(v)) {
     return true;
     } else {
         return false;
@@ -99,6 +97,17 @@ bool Value::isSymbol(const ValuePtr& v) {
     }
     else return false;
 }
+bool Value::isBoolean(const ValuePtr& v) {
+    if (typeid(*v) == typeid(BooleanValue)) {
+        return true;
+    }else return false;
+}
+bool Value::isAtom(const ValuePtr& v) {
+    if (isSelfEvaluating(v)||
+        isNil(v)|| isSymbol(v)) {
+        return true;
+    }else return false;
+} 
 bool Value::isList(const ValuePtr& v) {
     if (auto pair = dynamic_cast<PairValue*>(v.get())) {
         auto current = pair->get_cdr();
@@ -132,6 +141,24 @@ bool Value::isPair(const ValuePtr& v) {
         return true;
     } 
     return false;
+}
+bool Value::isLambda(const ValuePtr& v) {
+    if (typeid(*v) == typeid(LambdaValue)) {
+        return true;
+    }
+    return false;
+}
+bool Value::isProcedure(const ValuePtr& v) {
+    if (isPair(v) || isLambda(v)) {
+        return true;
+    }else return false;
+}
+bool Value::isInteger(const ValuePtr& v) {
+    if (!isNumber(v)) {
+        return false;
+    }
+    auto ptr = dynamic_cast<NumericValue*>(v.get());
+    return ptr->IsInteger();
 }
 
 std::vector<ValuePtr> Value::toVec(const ValuePtr& v) {
@@ -171,6 +198,9 @@ double Value::asNumber(const ValuePtr& v) const {
 double NumericValue::asNumber(const ValuePtr& v) const {
     return value;
 }
+bool NumericValue::IsInteger() const {
+    return integer;
+}
 std::string BuiltinProcValue::toString() const {
     return "#<procedure>";
 }
@@ -180,17 +210,31 @@ BultinFuncType* BuiltinProcValue::getFunc() const {
 }
 
 bool BuiltinProcValue::isTypeCheck() const {
-    if (func==builtin::isAtom||
-        func==builtin::isBoolean||
-        func==builtin::isInteger||
-        func==builtin::isList||
-        func==builtin::isNull||
-        func==builtin::isNumber||
-        func==builtin::isPair||
-        func==builtin::isProcedure||
-        func==builtin::isString||
-        func==builtin::isSymbol){
+    if (func==isT<Value::isAtom>||
+        func==isT<Value::isBoolean>||
+        func==isT<Value::isInteger>||
+        func==isT<Value::isList>||
+        func==isT<Value::isNil>||
+        func==isT<Value::isNumber>||
+        func==isT<Value::isPair>||
+        func==isT<Value::isProcedure>||
+        func==isT<Value::isString>||
+        func==isT<Value::isSymbol>){
             return true;
         }
     return false;
+}
+
+bool Value::asBoolean(const ValuePtr& v) const {
+    if (auto number = dynamic_cast<BooleanValue*>(v.get())) {
+        return number->asNumber(v);
+    }
+    return true;
+}
+bool BooleanValue::asBoolean(const ValuePtr& v) const {
+    return value;
+}
+
+std::string LambdaValue::toString() const {
+    return "#<procedure>";
 }

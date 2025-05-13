@@ -1,8 +1,8 @@
 #include"builtin.h"
 #include"error.h"
 #include<iostream>
-#include"parser.h"
 #include<cmath>
+#include"utils.hpp"
 
 Builtin::Builtin() {
     // 核心库
@@ -12,16 +12,16 @@ Builtin::Builtin() {
     builtin_map.insert({"exit", std::make_shared<BuiltinProcValue>(&builtin::exit)});
     builtin_map.insert({"newline", std::make_shared<BuiltinProcValue>(&builtin::newline)});
     //类型检查库
-    builtin_map.insert({"atom?", std::make_shared<BuiltinProcValue>(&builtin::isAtom)});
-    builtin_map.insert({"boolean?", std::make_shared<BuiltinProcValue>(&builtin::isBoolean)});
-    builtin_map.insert({"integer?", std::make_shared<BuiltinProcValue>(&builtin::isInteger)});
-    builtin_map.insert({"list?", std::make_shared<BuiltinProcValue>(&builtin::isList)});
-    builtin_map.insert({"number?", std::make_shared<BuiltinProcValue>(&builtin::isNumber)});
-    builtin_map.insert({"null?", std::make_shared<BuiltinProcValue>(&builtin::isNull)});
-    builtin_map.insert({"pair?", std::make_shared<BuiltinProcValue>(&builtin::isPair)});
-    builtin_map.insert({"procedure?", std::make_shared<BuiltinProcValue>(&builtin::isProcedure)});
-    builtin_map.insert({"string?", std::make_shared<BuiltinProcValue>(&builtin::isString)});
-    builtin_map.insert({"symbol?", std::make_shared<BuiltinProcValue>(&builtin::isSymbol)});
+    builtin_map.insert({"atom?", std::make_shared<BuiltinProcValue>(&isT<&Value::isAtom>)});
+    builtin_map.insert({"boolean?", std::make_shared<BuiltinProcValue>(&isT<&Value::isBoolean>)});
+    builtin_map.insert({"integer?", std::make_shared<BuiltinProcValue>(&isT<&Value::isInteger>)});
+    builtin_map.insert({"list?", std::make_shared<BuiltinProcValue>(&isT<&Value::isList>)});
+    builtin_map.insert({"number?", std::make_shared<BuiltinProcValue>(&isT<&Value::isNumber>)});
+    builtin_map.insert({"null?", std::make_shared<BuiltinProcValue>(&isT<&Value::isNil>)});
+    builtin_map.insert({"pair?", std::make_shared<BuiltinProcValue>(&isT<&Value::isPair>)});
+    builtin_map.insert({"procedure?", std::make_shared<BuiltinProcValue>(&isT<&Value::isProcedure>)});
+    builtin_map.insert({"string?", std::make_shared<BuiltinProcValue>(&isT<&Value::isString>)});
+    builtin_map.insert({"symbol?", std::make_shared<BuiltinProcValue>(&isT<&Value::isSymbol>)});
     //对子与列表操作库
     builtin_map.insert({"cdr", std::make_shared<BuiltinProcValue>(&builtin::cdr)});
     builtin_map.insert({"car", std::make_shared<BuiltinProcValue>(&builtin::car)});
@@ -53,23 +53,19 @@ Builtin::Builtin() {
 
 // 核心库
 ValuePtr builtin::print(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        std::cout << params[0]->toString() << "\n";
-        return std::make_shared<NilValue>();
-    }
-    throw LispError("The size of params is not correct.");
+    CHECKONEPARAM(params);
+    std::cout << params[0]->toString() << "\n";
+    return std::make_shared<NilValue>();
 }
 ValuePtr builtin::display(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isString(param)) {
-            std::cout << param->asString(param) << "\n";
-            return std::make_shared<NilValue>();
-        }
-        std::cout << param->toString() << "\n";
+    CHECKONEPARAM(params);
+    auto& param = params[0];
+    if (param->isString(param)) {
+        std::cout << param->asString(param) << "\n";
         return std::make_shared<NilValue>();
     }
-    throw LispError("The size of params is not correct.");
+    std::cout << param->toString() << "\n";
+    return std::make_shared<NilValue>();
 }
 ValuePtr builtin::error(const std::vector<ValuePtr>& params) {
     if (params.size()==1) {
@@ -98,135 +94,13 @@ ValuePtr builtin::newline(const std::vector<ValuePtr>& params) {
     }
     throw LispError("The size of params is not correct.");
 }
-//类型检查库
-ValuePtr builtin::isAtom(const std::vector<ValuePtr>& params) {
-    if (params.size()==1){
-        auto& param = params[0];
-        if (param->isSelfEvaluating(param) || param->isNil(param) ||
-            param->isSymbol(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isBoolean(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isNil(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else 
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isInteger(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (!param->isNumber(param)) {
-            return std::make_shared<BooleanValue>(false);
-        } 
-        auto num = param->asNumber(param);
-        auto intnum = static_cast<int>(num);
-        if (num != double(intnum)) {
-            return std::make_shared<BooleanValue>(false);
-        }
-        return std::make_shared<BooleanValue>(true);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isList(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isList(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isNumber(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isNumber(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isNull(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isNil(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isPair(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isPair(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isProcedure(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isBuiltin(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isString(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isString(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
-ValuePtr builtin::isSymbol(const std::vector<ValuePtr>& params) {
-    if (params.size()==1) {
-        auto& param = params[0];
-        if (param->isSymbol(param)) {
-            return std::make_shared<BooleanValue>(true);
-        } else
-            return std::make_shared<BooleanValue>(false);
-    }
-    throw LispError("The size of params is not correct.");
-}
+
 //对子与列表操作库
 ValuePtr builtin::cdr(const std::vector<ValuePtr>& params) {
-    if (params.size()!=1) {
-        throw LispError("The size of params is not correct.");
-    } 
-    auto param = params[0];
-    if (!param->isPair(param)){
-        throw LispError("Should get a pair.");
-    }
-    auto pair = dynamic_cast<PairValue*>(param.get());
-    return pair->get_cdr();
+    return getPair(params)->get_cdr();
 }
 ValuePtr builtin::car(const std::vector<ValuePtr>& params) {
-    if (params.size()!=1) {
-        throw LispError("The size of params is not correct.");
-    }
-    auto param = params[0];
-    if (!param->isPair(param)) {
-        throw LispError("Should get a pair.");
-    }
-    auto pair = dynamic_cast<PairValue*>(param.get());
-    return pair->get_car();
+    return getPair(params)->get_car();
 }
 ValuePtr builtin::cons(const std::vector<ValuePtr>& params) {
     if (params.size() != 2) {
@@ -235,15 +109,13 @@ ValuePtr builtin::cons(const std::vector<ValuePtr>& params) {
     return std::make_shared<PairValue>(params[0], params[1]);
 }
 ValuePtr builtin::length(const std::vector<ValuePtr>& params) {
-    if (params.size() != 1) {
-        throw LispError("The size of params is not correct.");
-    }
-    auto param = params[0];
+    CHECKONEPARAM(params);
+    auto& param = params[0];
     auto vec = param->toVec(param);
     return std::make_shared<NumericValue>(vec.size());
 }
 ValuePtr builtin::list(const std::vector<ValuePtr>& params) {
-    auto list = parser::vec2pair(params);
+    auto list = vec2pair(params);
     return list;
 }
 ValuePtr builtin::append(const std::vector<ValuePtr>& params) {
@@ -252,7 +124,7 @@ ValuePtr builtin::append(const std::vector<ValuePtr>& params) {
         auto list = pair->toVec(pair);
         ans.append_range(list);
     } 
-    return parser::vec2pair(ans);
+    return vec2pair(ans);
 }
 //算数运算库
 ValuePtr builtin::add(const std::vector<ValuePtr>& params) {
@@ -308,9 +180,7 @@ ValuePtr builtin::divide(const std::vector<ValuePtr>& params) {
         y = nums[1];
         x = nums[0];
     }
-    if (y == 0) {
-        throw LispError("Cannot divide a zero value.");
-    }
+    CHECKDIVIDEND(y);
     result = x / y;
     return std::make_shared<NumericValue>(result);
 }
@@ -333,7 +203,7 @@ ValuePtr builtin::quotient(const std::vector<ValuePtr>& params) {
     auto nums = checkAndGetTwoNums(params);
     auto y = nums[1];
     auto x = nums[0];
-    if (y == 0) throw LispError("Cannot divide a zero value.");
+    CHECKDIVIDEND(y);
     auto value = y/x;
     value = std::trunc(value);
     return std::make_shared<NumericValue>(value);
@@ -342,7 +212,7 @@ ValuePtr builtin::modulo(const std::vector<ValuePtr>& params) {
     auto nums = checkAndGetTwoNums(params);
     auto y = nums[1];
     auto x = nums[0];
-    if (y == 0) throw LispError("Cannot divide a zero value.");
+    CHECKDIVIDEND(y);
     double q = x - y * std::floor(x / y);
     return std::make_shared<NumericValue>(q);
 }
@@ -350,12 +220,21 @@ ValuePtr builtin::remainder(const std::vector<ValuePtr>& params) {
     auto nums = checkAndGetTwoNums(params);
     auto y = nums[1];
     auto x = nums[0];
-    if (y == 0) throw LispError("Cannot divide a zero value.");
+    CHECKDIVIDEND(y);
     auto t = std::trunc(x/y);
     auto q =  x - y * t;
     return std::make_shared<NumericValue>(q);
 }
 //先写一些工具函数对代码进行一定的抽象 否则复制粘贴也挺麻烦的
+PairValue* builtin::getPair(const std::vector<ValuePtr>& params) {
+    CHECKONEPARAM(params);
+    auto& param = params[0];
+    if (!param->isPair(param)) {
+        throw LispError("Should get a pair.");
+    }
+    auto pair = dynamic_cast<PairValue*>(param.get());
+    return pair;
+}
 std::vector<double> builtin::checkAndGetTwoNums(const std::vector<ValuePtr>& params) {
     if (params.size() != 2) {
         throw LispError("The size of params is not correct.");
@@ -370,15 +249,20 @@ std::vector<double> builtin::checkAndGetTwoNums(const std::vector<ValuePtr>& par
     return {x,y};
 }
 double builtin::checkAndGetOneNum(const std::vector<ValuePtr>& params) {
-    if (params.size() != 1) {
-        throw LispError("The size of params is not correct.");
-    }
-    auto param = params[0];
+    CHECKONEPARAM(params);
+    auto& param = params[0];
     if (!param->isNumber(param)) {
         throw LispError("Cannot operate a non-numeric value.");
     }
     auto value = param->asNumber(param);
     return value;
+}
+int builtin::getOneInteger(const std::vector<ValuePtr>& params) {
+    auto value = checkAndGetOneNum(params);
+    if (value != static_cast<int>(value))
+        throw LispError("Should get a integer.");
+    int num = static_cast<int>(value);
+    return num;
 }
 //比较库
 ValuePtr builtin::equ(const std::vector<ValuePtr>& params) {
@@ -407,18 +291,10 @@ ValuePtr builtin::largere(const std::vector<ValuePtr>& params) {
     return std::make_shared<BooleanValue>(x >= y);
 }
 ValuePtr builtin::even(const std::vector<ValuePtr>& params) {
-    auto value = checkAndGetOneNum(params);
-    if (value != static_cast<int>(value))
-        throw LispError("Should get a integer.");
-    int num = static_cast<int>(value);
-    return std::make_shared<BooleanValue>(num%2==0);
+    return std::make_shared<BooleanValue>(getOneInteger(params) % 2 == 0);
 }
 ValuePtr builtin::odd(const std::vector<ValuePtr>& params) {
-    auto value = checkAndGetOneNum(params);
-    if (value != static_cast<int>(value))
-        throw LispError("Should get a integer.");
-    int num = static_cast<int>(value);
-    return std::make_shared<BooleanValue>(num % 2 != 0);
+    return std::make_shared<BooleanValue>(getOneInteger(params) % 2 != 0);
 }
 ValuePtr builtin::zero(const std::vector<ValuePtr>& params) {
     auto value = checkAndGetOneNum(params);

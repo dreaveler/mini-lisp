@@ -7,14 +7,19 @@
 class EvalEnv {
 private:
     std::unordered_map<std::string,ValuePtr>map;
+    std::shared_ptr<EvalEnv> parent ;
 public:
-    EvalEnv();
+    EvalEnv(std::shared_ptr<EvalEnv> parent);
     ValuePtr eval(ValuePtr expr);
     ValuePtr eval_list(ValuePtr expr);
     ValuePtr eval_symbol(ValuePtr expr);
     std::vector<ValuePtr> evalList(ValuePtr expr);
     ValuePtr apply(ValuePtr proc,std::vector<ValuePtr>args);
     ValuePtr checkVal(ValuePtr expr);
+    void add_contents(std::string str,ValuePtr expr);
+
+    ValuePtr lookupBinding(std::string);
+    void defineBinding(std::string);
 };
 
 #endif
