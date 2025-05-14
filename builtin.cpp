@@ -111,7 +111,7 @@ ValuePtr builtin::cons(const std::vector<ValuePtr>& params) {
 ValuePtr builtin::length(const std::vector<ValuePtr>& params) {
     CHECKONEPARAM(params);
     auto& param = params[0];
-    auto vec = param->toVec(param);
+    auto vec = Value::toVec(param);
     return std::make_shared<NumericValue>(vec.size());
 }
 ValuePtr builtin::list(const std::vector<ValuePtr>& params) {
@@ -121,7 +121,7 @@ ValuePtr builtin::list(const std::vector<ValuePtr>& params) {
 ValuePtr builtin::append(const std::vector<ValuePtr>& params) {
     std::vector<ValuePtr>ans;
     for (auto& pair : params) {
-        auto list = pair->toVec(pair);
+        auto list = Value::toVec(pair);
         ans.append_range(list);
     } 
     return vec2pair(ans);
@@ -129,7 +129,7 @@ ValuePtr builtin::append(const std::vector<ValuePtr>& params) {
 //算数运算库
 ValuePtr builtin::add(const std::vector<ValuePtr>& params) {
     auto result = 0.0;
-    for (const auto& i : params) {
+    for (auto& i : params) {
         if (!i->isNumber(i)) {
             throw LispError("Cannot add a non-numeric value.");
         }

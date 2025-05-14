@@ -15,26 +15,26 @@ const std::unordered_map<std::string, SpecialFormType*> SPECIAL_FORMS{
     };
 
 ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
-    if (args.size() != 2) throw LispError("Should get two param.");
     if (auto name = args[0]->asSymbol(args[0])) {
+        if (args.size() != 2) throw LispError("Should get two param.");
         ValuePtr current_expr = args[1];
         current_expr = env.checkVal(current_expr);
-        env.add_contents(*name,current_expr);
+        env.defineBinding(*name,current_expr);
         return std::make_shared<NilValue>();
     }
-    else if (args[0]->isList(args[0])) {
-        auto expr = args[0]->toVec(args[0]);
+    else if (Value::isList(args[0])) {
+        auto expr = Value::toVec(args[0]);
         auto first = vec2pair(expr);
         auto funcname = expr[0]->asSymbol(expr[0]);
         auto pair = dynamic_cast<PairValue*>(first.get());
         auto params = pair->get_cdr();
-        auto& second = args[1];
-        std::vector<ValuePtr> input {second};
+        std::vector<ValuePtr> input;
+        std::copy(args.begin()+1,args.end(),std::back_inserter(input));
         input.insert(input.begin(),params);
         input.insert(input.begin() ,std::make_shared<SymbolValue>("lambda"));
         auto arg = vec2pair(input);
         arg = env.checkVal(arg);
-        env.add_contents(*funcname,arg);
+        env.defineBinding(*funcname,arg);
         return std::make_shared<NilValue>();
     }
     else {
@@ -85,11 +85,11 @@ ValuePtr lambdaForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
         throw LispError("Should get more than one param.");
     }
     auto& params = args[0];
-    auto vecOfParams = params->toVec(params);
+    auto vecOfParams = Value::toVec(params);
     std::vector<std::string>vecStrParams;
     std::ranges::transform(vecOfParams, std::back_inserter(vecStrParams),
                            [](const ValuePtr& v) { return v->asSymbol(v).value();});
     std::vector<ValuePtr> body;            
     std::copy(args.begin() + 1, args.end(),std::back_inserter(body));
-    return std::make_shared<LambdaValue>(vecStrParams,body);
+    return std::make_shared<LambdaValue>(vecStrParams,body,env.shared_from_this());
 }

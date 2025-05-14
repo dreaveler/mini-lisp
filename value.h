@@ -9,15 +9,17 @@
 #include<iomanip>
 #include<sstream>
 #include"error.h"
-
-
 class Value;
 using ValuePtr = std::shared_ptr<Value>;
+
+class EvalEnv;
 
 class Value {
 public:
     virtual ~Value() {};
+    //toString用于输出
     virtual std::string toString() const;
+    //bool函数用于判断  且可在内置过程中被调用
     static bool isSelfEvaluating(const ValuePtr& v);
     static bool isAtom(const ValuePtr& v);
     static bool isBoolean(const ValuePtr& v);
@@ -31,9 +33,9 @@ public:
     static bool isLambda(const ValuePtr& v);
     static bool isBuiltin(const ValuePtr& v);
     static bool isProcedure(const ValuePtr& v);
-
+    //考虑把这个设为utils.hpp中的内容
     static std::vector<ValuePtr> toVec(const ValuePtr& v);
-
+    //as函数返回需要的值
     virtual std::optional<std::string> asSymbol(const ValuePtr& v);
     virtual double asNumber(const ValuePtr& v) const;
     virtual std::string asString(const ValuePtr& v) const;
@@ -52,7 +54,7 @@ public:
 class NumericValue :public Value {
 private:
     const double value;
-    bool integer;
+    bool integer;   //true即为是整数  false即不是整数  在生成value时判断并保存为属性
 public:
     NumericValue(double v)
         : Value(), value(v), integer(v == static_cast<int>(v)) {};
@@ -112,10 +114,12 @@ class LambdaValue : public Value {
 private:
     std::vector<std::string> params;
     std::vector<ValuePtr> body;
+    std::shared_ptr<EvalEnv> parent;
 public:
-    LambdaValue(std::vector<std::string> params, std::vector<ValuePtr> body)
-        : params(params), body(body) {};
+    LambdaValue(std::vector<std::string> params, std::vector<ValuePtr> body ,std::shared_ptr<EvalEnv> env)
+        : params(params), body(body) ,parent(env) {};
     std::string toString() const override;  // 如前所述，返回 #<procedure> 即可
+    ValuePtr apply(const std::vector<ValuePtr>args) const;
 };
 
 #endif

@@ -2,6 +2,8 @@
 #include<iomanip>
 #include"error.h"
 #include"builtin.h"
+#include"eval_env.h"
+#include<algorithm>
 std::string Value::toString() const {
     return "";
 }
@@ -226,8 +228,8 @@ bool BuiltinProcValue::isTypeCheck() const {
 }
 
 bool Value::asBoolean(const ValuePtr& v) const {
-    if (auto number = dynamic_cast<BooleanValue*>(v.get())) {
-        return number->asNumber(v);
+    if (auto boolean = dynamic_cast<BooleanValue*>(v.get())) {
+        return boolean->asBoolean(v);
     }
     return true;
 }
@@ -237,4 +239,11 @@ bool BooleanValue::asBoolean(const ValuePtr& v) const {
 
 std::string LambdaValue::toString() const {
     return "#<procedure>";
+}
+ValuePtr LambdaValue::apply(const std::vector<ValuePtr> args) const {
+    auto current = parent->createChild(params,args);
+    std::vector<ValuePtr> result;
+    std::ranges::transform(body, std::back_inserter(result),
+                           [current](ValuePtr v) { return current->eval(v); });
+    return result[result.size()-1];
 }
