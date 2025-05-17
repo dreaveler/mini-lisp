@@ -22,7 +22,8 @@ ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     if (auto name = args[0]->asSymbol(args[0])) {
         if (args.size() != 2) throw LispError("Should get two param.");
         ValuePtr current_expr = args[1];
-        env.defineBinding(*name,current_expr);
+        auto value = env.eval(current_expr);
+        env.defineBinding(*name,value);
         return std::make_shared<NilValue>();
     }
     else if (Value::isList(args[0])) {
@@ -36,6 +37,7 @@ ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
         input.insert(input.begin(),params);
         input.insert(input.begin() ,std::make_shared<SymbolValue>("lambda"));
         auto arg = vec2pair(input);
+        arg = env.eval(arg);
         env.defineBinding(*funcname,arg);
         return std::make_shared<NilValue>();
     }
@@ -137,7 +139,7 @@ ValuePtr letForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     for (auto& param:params){
         auto pair = Value::toVec(param);
         nameParams.push_back(pair[0]->asSymbol(pair[0]).value());
-        trueParams.push_back(pair[1]);
+        trueParams.push_back(env.eval(pair[1]));
     }
     auto lambenv = std::make_shared<LambdaValue>(nameParams, body, env.shared_from_this());
     return lambenv->apply(trueParams);

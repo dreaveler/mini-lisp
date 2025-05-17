@@ -20,6 +20,9 @@ ValuePtr EvalEnv::eval(ValuePtr expr){
     else if (expr->isNil(expr)) {
         throw LispError("Evaluating nil is prohibited.");
     } 
+    else if (expr->isProcedure(expr)) {
+        return expr;
+    }
     else if (expr->isSymbol(expr)) {
         return eval_symbol(expr);
     }
@@ -36,13 +39,14 @@ ValuePtr EvalEnv::eval_list(ValuePtr expr) {
     auto pair = dynamic_cast<PairValue*>(expr.get());
     auto car = pair->get_car();
     auto cdr = pair->get_cdr();
-    auto name = car->asSymbol(car);
+    auto proc = this->eval(v[0]);
+    auto name = proc->asSymbol(proc);
     if (name.has_value()&&SPECIAL_FORMS.contains(*name)) {
             return SPECIAL_FORMS.at(*name)(Value::toVec(cdr), *this);
-    } else if (auto proc = this->eval(v[0]);proc->isBuiltin(proc)) {
+    } else if (proc->isBuiltin(proc)) {
         std::vector<ValuePtr> args = this->evalList(cdr);
         return this->apply(proc,args);
-    } else if (name.has_value() && makesureBinding(*name)) {
+    } else if (name.has_value() && makesureBinding(*name)||Value::isLambda(proc)) {
         auto args = evalList(cdr);
         return this->apply(proc,args);
     } else
@@ -51,10 +55,11 @@ ValuePtr EvalEnv::eval_list(ValuePtr expr) {
 //如果是类型检查库就不改变原有格式直接传入？？
 
 ValuePtr EvalEnv::eval_symbol(ValuePtr expr) {
-    if (auto name = expr->asSymbol(expr)) {
+    auto name = expr->asSymbol(expr);
+    if (name.has_value()&&SPECIAL_FORMS.contains(*name)) {
+        return expr;
+    } else if(name.has_value()) {
         return lookupBinding(name.value());
-    } else {
-        throw SyntaxError("It is not a symbol.");
     }
 }
 
@@ -100,8 +105,7 @@ bool EvalEnv::makesureBinding(std::string str) {
     return false;
 }
 void EvalEnv::defineBinding(std::string str,const ValuePtr& v) {
-    auto value = this->eval(v);
-    map[str] = value;
+    map[str] = v;
 }
 std::shared_ptr<EvalEnv> EvalEnv::createGlobal() {
     return std::make_shared<EvalEnv>(nullptr);
