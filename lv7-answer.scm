@@ -1,0 +1,2 @@
+(define (quicksort lst) (if (null? lst)  '()  (let ((pivot (car lst)))  (let ((rest (cdr lst)))  (let ((less (filter (lambda (x) (< x pivot)) rest)) (greater (filter (lambda (x) (>= x pivot)) rest))) (append (quicksort less) (list pivot) (quicksort greater))))))) 
+(print (quicksort '(12 71 2 15 29 82 87 8 18 66 81 25 63 97 40 3 93 58 53 31 47)))

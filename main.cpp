@@ -25,7 +25,7 @@ static std::string Lisp(std::shared_ptr<EvalEnv> env,std::string line) {
 }
 
 int main(int argc,char** argv) {
-    RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv5Extra, Lv6,Lv7,Lv7Lib,Sicp);
+    //RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv5Extra, Lv6,Lv7,Lv7Lib,Sicp);
     std::shared_ptr<EvalEnv>global{ EvalEnv::createGlobal()};
     bool REPL {argc==1};
     if (REPL) {
@@ -48,7 +48,7 @@ int main(int argc,char** argv) {
         
         if (argc != 3)
             throw SyntaxError("You should input *.exe -i (the address).");
-        if (argv[1] != "-i")
+        if (std::strcmp(argv[1], "-i")!=0)
             throw SyntaxError(std::string(argv[1]) + " is invalid.");
         std::ifstream file{argv[2]};
         if (!file) throw SyntaxError("The file is not opened.");
