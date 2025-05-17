@@ -29,9 +29,6 @@ ValuePtr EvalEnv::eval(ValuePtr expr){
     else if (expr->isPair(expr)) {
         return expr;
     }
-    else {
-        throw LispError("Unimplemented");
-    }
 }
 
 ValuePtr EvalEnv::eval_list(ValuePtr expr) {
@@ -64,35 +61,17 @@ ValuePtr EvalEnv::eval_symbol(ValuePtr expr) {
 std::vector<ValuePtr> EvalEnv::evalList(ValuePtr expr) {
     std::vector<ValuePtr> result;
     std::ranges::transform(Value::toVec(expr), std::back_inserter(result),
-                           [this](ValuePtr v) { return this->checkVal(v); });
+                           [this](ValuePtr v) { return this->eval(v); });
     return result;
 }
 ValuePtr EvalEnv::apply(ValuePtr proc, std::vector<ValuePtr>args) {
     if (auto pro = dynamic_cast<BuiltinProcValue*>(proc.get())) {
         auto func = pro->getFunc();
-        return func(args);
+        return func(args,*this);
     } else if (auto lambda = dynamic_cast<LambdaValue*>(proc.get())) {
         return lambda->apply(args);
     }
-    else {
-        throw LispError("Unimplemented");
-    }
 }
-
-//我需要这个函数的定位是传入一个任意类型的ValuePtr   传出一个SelfEvaluating的ValuePtr
-ValuePtr EvalEnv::checkVal(ValuePtr expr) {
-    while (true){
-        if (expr->isSelfEvaluating(expr)||
-            expr->isBuiltin(expr)||
-            expr->isNil(expr)||
-            (!expr->isList(expr)) && (expr->isPair(expr))||
-            expr->isLambda(expr)) {
-            return expr;
-        }
-        expr = eval(expr);
-    }
-}
-
 
 ValuePtr EvalEnv::lookupBinding(std::string str) {
     std::shared_ptr<EvalEnv> current {this->shared_from_this()};
@@ -121,7 +100,7 @@ bool EvalEnv::makesureBinding(std::string str) {
     return false;
 }
 void EvalEnv::defineBinding(std::string str,const ValuePtr& v) {
-    auto value = this->checkVal(v);
+    auto value = this->eval(v);
     map[str] = value;
 }
 std::shared_ptr<EvalEnv> EvalEnv::createGlobal() {

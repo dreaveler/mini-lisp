@@ -19,7 +19,6 @@ public:
     ValuePtr eval_symbol(ValuePtr expr);
     std::vector<ValuePtr> evalList(ValuePtr expr);
     ValuePtr apply(ValuePtr proc,std::vector<ValuePtr>args);
-    ValuePtr checkVal(ValuePtr expr);
 
     ValuePtr lookupBinding(std::string str);
     bool makesureBinding(std::string str);

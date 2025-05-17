@@ -98,7 +98,7 @@ public:
     ValuePtr get_car() const;
 };
 
-using BultinFuncType = ValuePtr(const std::vector<ValuePtr>&);
+using BultinFuncType = ValuePtr(const std::vector<ValuePtr>&,EvalEnv&);
 
 class BuiltinProcValue : public Value {  
 private:  
@@ -120,6 +120,7 @@ public:
         : params(params), body(body) ,parent(env) {};
     std::string toString() const override;  // 如前所述，返回 #<procedure> 即可
     ValuePtr apply(const std::vector<ValuePtr>args) const;
+
 };
 
 #endif

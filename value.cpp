@@ -124,6 +124,9 @@ bool Value::isList(const ValuePtr& v) {
             }
         }
     }
+    else if (isNil(v)) {
+        return true;
+    }
     else return false;
 }
 bool Value::isBuiltin(const ValuePtr& v){
@@ -151,7 +154,7 @@ bool Value::isLambda(const ValuePtr& v) {
     return false;
 }
 bool Value::isProcedure(const ValuePtr& v) {
-    if (isPair(v) || isLambda(v)) {
+    if (isBuiltin(v) || isLambda(v)) {
         return true;
     }else return false;
 }

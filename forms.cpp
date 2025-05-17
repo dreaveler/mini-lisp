@@ -11,14 +11,17 @@ const std::unordered_map<std::string, SpecialFormType*> SPECIAL_FORMS{
     {"if", ifForm},
     {"and", andForm},
     {"or", orForm},
-    {"lambda",lambdaForm}
+    {"lambda",lambdaForm},
+    {"cond", condForm},     
+    {"begin",beginForm}, 
+    {"let",letForm},       
+    {"quasiquote",quasiquoteForm},
     };
 
 ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     if (auto name = args[0]->asSymbol(args[0])) {
         if (args.size() != 2) throw LispError("Should get two param.");
         ValuePtr current_expr = args[1];
-        current_expr = env.checkVal(current_expr);
         env.defineBinding(*name,current_expr);
         return std::make_shared<NilValue>();
     }
@@ -33,7 +36,6 @@ ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
         input.insert(input.begin(),params);
         input.insert(input.begin() ,std::make_shared<SymbolValue>("lambda"));
         auto arg = vec2pair(input);
-        arg = env.checkVal(arg);
         env.defineBinding(*funcname,arg);
         return std::make_shared<NilValue>();
     }
@@ -93,3 +95,64 @@ ValuePtr lambdaForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     std::copy(args.begin() + 1, args.end(),std::back_inserter(body));
     return std::make_shared<LambdaValue>(vecStrParams,body,env.shared_from_this());
 }
+//args中的每一个是一个子句  子句的[0]是一个条件  后面是表达式
+ValuePtr condForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
+    using namespace std::literals;
+    for (auto i = 0;i<args.size();i++){
+        auto sentence = Value::toVec(args[i]);
+        if (sentence.size() == 0) throw LispError("Not defined.");
+        if (auto name = sentence[0]->asSymbol(sentence[0]);
+            name.has_value() && name == "else"s) {
+            if (i != args.size() - 1) throw LispError("The location of else is not right.");
+            std::vector<ValuePtr>result;
+            std::ranges::transform(sentence.begin() + 1, sentence.end(),
+                                   std::back_inserter(result),
+                                   [&env](ValuePtr& v) {return env.eval(v);});
+            return result[result.size()-1];
+        }
+        if (auto res = env.eval(sentence[0]); res->asBoolean(res)) {
+            std::vector<ValuePtr> result;
+            std::ranges::transform(sentence.begin() + 1, sentence.end(),
+                                   std::back_inserter(result),
+                                   [&env](ValuePtr& v) { return env.eval(v); });
+            if (result.size() != 0) {
+                return result[result.size()-1];
+            }else return res;
+        }
+    }
+}
+ValuePtr beginForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
+    auto list = args;
+    std::vector<ValuePtr> result;
+    std::ranges::transform(list,std::back_inserter(result),
+                           [&env](ValuePtr& v) { return env.eval(v); });
+    return result[result.size()-1];
+}
+ValuePtr letForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
+    auto params = Value::toVec(args[0]);
+    std::vector<ValuePtr>body;
+    std::copy(args.begin() + 1, args.end(), std::back_inserter(body));
+    std::vector<std::string>nameParams;
+    std::vector<ValuePtr>trueParams;
+    for (auto& param:params){
+        auto pair = Value::toVec(param);
+        nameParams.push_back(pair[0]->asSymbol(pair[0]).value());
+        trueParams.push_back(pair[1]);
+    }
+    auto lambenv = std::make_shared<LambdaValue>(nameParams, body, env.shared_from_this());
+    return lambenv->apply(trueParams);
+}
+ValuePtr quasiquoteForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
+    using namespace std::literals;
+    if (args.size() != 1) throw LispError("Should get one expr.");
+    auto& expr = args[0];
+    if (!Value::isPair(expr)) return expr;
+    auto pair = dynamic_cast<PairValue*>(expr.get());
+    auto car = pair->get_car(), cdr = pair->get_cdr();
+    auto name = car->asSymbol(car);
+    if (name.has_value() && name == "quasiquote"s) throw LispError("The quasiquotein quosiquote is not defined.");
+    if (name.has_value() && name == "unquote"s) return env.eval(dynamic_cast<PairValue*>(cdr.get())->get_car());
+    ValuePtr qq_car = quasiquoteForm({car}, env);
+    ValuePtr qq_cdr = quasiquoteForm({cdr}, env);
+    return std::make_shared<PairValue>(qq_car, qq_cdr);
+ }
