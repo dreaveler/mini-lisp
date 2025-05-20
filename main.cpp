@@ -24,40 +24,53 @@ static std::string Lisp(std::shared_ptr<EvalEnv> env,std::string line) {
     return env->eval(std::move(value))->toString();
 }
 
-int main(int argc,char** argv) {
-    //RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv5Extra, Lv6,Lv7,Lv7Lib,Sicp);
-    std::shared_ptr<EvalEnv>global{ EvalEnv::createGlobal()};
-    bool REPL {argc==1};
-    if (REPL) {
-        while (true) {
-            try {
-                std::cout << ">>> ";
-                std::string line;
-                std::getline(std::cin, line);
-                if (std::cin.eof()) {
-                    std::exit(0);
-                }
-                auto result = Lisp(global, line);
-                std::cout << result << "\n";
-                }catch (std::runtime_error& e) {
-                    std::cerr << "Error: " << e.what() << std::endl;
-            }
+static void processInput(std::shared_ptr<EvalEnv> env, std::istream& input,
+                         bool isRepl) {
+    std::string line;
+    while (true) {
+        if (isRepl) {
+            std::cout << ">>> "; 
+            std::cout.flush();
         }
-    } else {
+        if (!std::getline(input, line)) break;
+
         try {
-        
-        if (argc != 3)
-            throw SyntaxError("You should input *.exe -i (the address).");
-        if (std::strcmp(argv[1], "-i")!=0)
-            throw SyntaxError(std::string(argv[1]) + " is invalid.");
-        std::ifstream file{argv[2]};
-        if (!file) throw SyntaxError("The file is not opened.");
-        std::string line;
-        while (std::getline(file, line)) {
-            auto result = Lisp(global, line);
+            auto result = Lisp(env, line); 
+            if (isRepl) {
+                std::cout << result << "\n";  
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Error: " << e.what() << "\n";
         }
-        } catch (std::runtime_error& e) {
-            std::cerr << "Error: " << e.what() << std::endl;
     }
 }
+
+
+static std::istream* parseArgs(int argc, char** argv, bool& isRepl) {
+    isRepl = (argc == 1);
+    if (isRepl) return &std::cin;
+
+    if (argc != 3 || std::strcmp(argv[1], "-i") != 0) {
+        throw SyntaxError("Usage: " + std::string(argv[0]) + " [-i filename]");
+    }
+    auto file = new std::ifstream(argv[2]);
+    if (!file->is_open()) {
+        delete file;
+        throw SyntaxError("Cannot open file " + std::string(argv[2]));
+    }
+    return file;
+}
+
+int main(int argc, char** argv) {
+    try {
+        bool isRepl;
+        auto inputStream = parseArgs(argc, argv, isRepl);
+        auto global = EvalEnv::createGlobal();
+        processInput(global, *inputStream, isRepl);
+        if (!isRepl) delete inputStream;
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+    return 0;
 }

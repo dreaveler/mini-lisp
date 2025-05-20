@@ -87,3 +87,30 @@ std::deque<TokenPtr> Tokenizer::tokenize() {
 std::deque<TokenPtr> Tokenizer::tokenize(const std::string& input) {
     return Tokenizer(input).tokenize();
 }
+
+std::string Tokenizer::tokenToColoredString(const TokenPtr& token) {
+    switch (token->getType()){
+        case TokenType::DOT: 
+            return COLOR_BLUE + token->toString()+COLOR_RESET;
+        case TokenType::IDENTIFIER: 
+            return COLOR_CYAN + token->toString()+COLOR_RESET;
+        case TokenType::BOOLEAN_LITERAL:
+            return COLOR_GREEN + token->toString() + COLOR_RESET;
+        case TokenType::NUMERIC_LITERAL:
+            return COLOR_MAGENTA + token->toString() + COLOR_RESET;
+        case TokenType::STRING_LITERAL: 
+            return COLOR_YELLOW + token->toString() + COLOR_RESET;
+        case TokenType::LEFT_PAREN: 
+            return COLOR_RED + token->toString() + COLOR_RESET;
+        case TokenType::RIGHT_PAREN:
+            return COLOR_RED + token->toString() + COLOR_RESET;
+        case TokenType::QUOTE:
+            return COLOR_BLUE + token->toString() + COLOR_RESET;
+        case TokenType::QUASIQUOTE:
+            return COLOR_BLUE + token->toString() + COLOR_RESET;
+        case TokenType::UNQUOTE:
+            return COLOR_BLUE + token->toString() + COLOR_RESET;
+        default:
+            return token->toString();
+    }
+}

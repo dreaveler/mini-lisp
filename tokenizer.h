@@ -10,6 +10,16 @@
 #include <stdexcept>
 #include "./error.h"
 
+// 颜色定义
+#define COLOR_RESET "\033[0m"
+#define COLOR_RED "\033[31m"
+#define COLOR_GREEN "\033[32m"
+#define COLOR_YELLOW "\033[33m"
+#define COLOR_BLUE "\033[34m"
+#define COLOR_MAGENTA "\033[35m"
+#define COLOR_CYAN "\033[36m"
+
+
 class Tokenizer {
 private:
     TokenPtr nextToken(int& pos);
@@ -20,6 +30,7 @@ private:
 
 public:
     static std::deque<TokenPtr> tokenize(const std::string& input);
+    static std::string tokenToColoredString(const TokenPtr& token);
 };
 
 #endif
