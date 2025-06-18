@@ -5,6 +5,7 @@
 #include<algorithm>
 #include<iterator>
 #include"forms.h"
+#include"utils.hpp"
 
 EvalEnv::EvalEnv(std::shared_ptr<EvalEnv>parent = nullptr):parent(parent){
     Builtin built;
@@ -35,14 +36,14 @@ ValuePtr EvalEnv::eval(ValuePtr expr){
 }
 
 ValuePtr EvalEnv::eval_list(ValuePtr expr) {
-    auto v = Value::toVec(expr);
+    auto v = toVec(expr);
     auto pair = dynamic_cast<PairValue*>(expr.get());
     auto car = pair->get_car();
     auto cdr = pair->get_cdr();
     auto proc = this->eval(v[0]);
     auto name = proc->asSymbol(proc);
     if (name.has_value()&&SPECIAL_FORMS.contains(*name)) {
-            return SPECIAL_FORMS.at(*name)(Value::toVec(cdr), *this);
+            return SPECIAL_FORMS.at(*name)(toVec(cdr), *this);
     } else if (proc->isBuiltin(proc)) {
         std::vector<ValuePtr> args = this->evalList(cdr);
         return this->apply(proc,args);
@@ -65,7 +66,7 @@ ValuePtr EvalEnv::eval_symbol(ValuePtr expr) {
 
 std::vector<ValuePtr> EvalEnv::evalList(ValuePtr expr) {
     std::vector<ValuePtr> result;
-    std::ranges::transform(Value::toVec(expr), std::back_inserter(result),
+    std::ranges::transform(toVec(expr), std::back_inserter(result),
                            [this](ValuePtr v) { return this->eval(v); });
     return result;
 }

@@ -27,7 +27,7 @@ ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
         return std::make_shared<NilValue>();
     }
     else if (Value::isList(args[0])) {
-        auto expr = Value::toVec(args[0]);
+        auto expr = toVec(args[0]);
         auto first = vec2pair(expr);
         auto funcname = expr[0]->asSymbol(expr[0]);
         auto pair = dynamic_cast<PairValue*>(first.get());
@@ -89,7 +89,7 @@ ValuePtr lambdaForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
         throw LispError("Should get more than one param.");
     }
     auto& params = args[0];
-    auto vecOfParams = Value::toVec(params);
+    auto vecOfParams = toVec(params);
     std::vector<std::string>vecStrParams;
     std::ranges::transform(vecOfParams, std::back_inserter(vecStrParams),
                            [](const ValuePtr& v) { return v->asSymbol(v).value();});
@@ -101,7 +101,7 @@ ValuePtr lambdaForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
 ValuePtr condForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     using namespace std::literals;
     for (auto i = 0;i<args.size();i++){
-        auto sentence = Value::toVec(args[i]);
+        auto sentence = toVec(args[i]);
         if (sentence.size() == 0) throw LispError("Not defined.");
         if (auto name = sentence[0]->asSymbol(sentence[0]);
             name.has_value() && name == "else"s) {
@@ -131,13 +131,13 @@ ValuePtr beginForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     return result[result.size()-1];
 }
 ValuePtr letForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
-    auto params = Value::toVec(args[0]);
+    auto params = toVec(args[0]);
     std::vector<ValuePtr>body;
     std::copy(args.begin() + 1, args.end(), std::back_inserter(body));
     std::vector<std::string>nameParams;
     std::vector<ValuePtr>trueParams;
     for (auto& param:params){
-        auto pair = Value::toVec(param);
+        auto pair = toVec(param);
         nameParams.push_back(pair[0]->asSymbol(pair[0]).value());
         trueParams.push_back(env.eval(pair[1]));
     }

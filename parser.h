@@ -16,6 +16,9 @@ public:
     Parser(std::deque<TokenPtr> tokens);
     ValuePtr parse();
     ValuePtr parseTails();
+    void checkExtraToken();
+    void checkNoneToken();
+
 };
 
 #endif

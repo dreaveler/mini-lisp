@@ -39,6 +39,9 @@
     <ClCompile Include="forms.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="io.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="error.h">
@@ -69,6 +72,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="utils.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="io.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

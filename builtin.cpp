@@ -111,7 +111,7 @@ std::vector<ValuePtr> builtin::getProcAndList(const std::vector<ValuePtr>& param
 ValuePtr builtin::apply(const std::vector<ValuePtr>& params, EvalEnv& env) {
     auto paa = getProcAndList(params);
     ValuePtr proc{paa[0]}, args {paa[1]};
-    return env.apply(proc,Value::toVec(args));
+    return env.apply(proc,toVec(args));
 }
 ValuePtr builtin::display(const std::vector<ValuePtr>& params, EvalEnv& env) {
     CHECKONEPARAM(params);
@@ -181,7 +181,7 @@ ValuePtr builtin::cons(const std::vector<ValuePtr>& params, EvalEnv& env) {
 ValuePtr builtin::length(const std::vector<ValuePtr>& params, EvalEnv& env) {
     CHECKONEPARAM(params);
     auto& param = params[0];
-    auto vec = Value::toVec(param);
+    auto vec = toVec(param);
     return std::make_shared<NumericValue>(vec.size());
 }
 ValuePtr builtin::list(const std::vector<ValuePtr>& params, EvalEnv& env) {
@@ -191,7 +191,7 @@ ValuePtr builtin::list(const std::vector<ValuePtr>& params, EvalEnv& env) {
 ValuePtr builtin::append(const std::vector<ValuePtr>& params, EvalEnv& env) {
     std::vector<ValuePtr>ans;
     for (auto& pair : params) {
-        auto list = Value::toVec(pair);
+        auto list = toVec(pair);
         ans.append_range(list);
     } 
     return vec2pair(ans);
@@ -199,7 +199,7 @@ ValuePtr builtin::append(const std::vector<ValuePtr>& params, EvalEnv& env) {
 ValuePtr builtin::map(const std::vector<ValuePtr>& params, EvalEnv& env) {
     auto paa = getProcAndList(params);
     auto proc {paa[0]};
-    auto list {Value::toVec(paa[1])};
+    auto list {toVec(paa[1])};
     std::vector<ValuePtr>result;
     std::ranges::transform(list, std::back_inserter(result),
                            [&proc,&env](ValuePtr& v) { return env.apply(proc,{v}); });
@@ -208,7 +208,7 @@ ValuePtr builtin::map(const std::vector<ValuePtr>& params, EvalEnv& env) {
 ValuePtr builtin::filter(const std::vector<ValuePtr>& params, EvalEnv& env) {
     auto paa = getProcAndList(params);
     auto proc{paa[0]};
-    auto list{Value::toVec(paa[1])};
+    auto list{toVec(paa[1])};
     std::vector<ValuePtr> result;
     for (auto& value:list){
         if (auto ans = env.apply(proc, {value});ans->asBoolean(ans)) {
@@ -222,7 +222,7 @@ ValuePtr builtin::reduce(const std::vector<ValuePtr>& params, EvalEnv& env) {
     auto proc{paa[0]};
     auto list{paa[1]};
     if (Value::isNil(list)) throw LispError("The list cannot be a Nil.");
-    if (Value::toVec(list).size() == 1) 
+    if (toVec(list).size() == 1) 
         return car({list},env);
     auto result =  apply({proc, std::make_shared<PairValue>(car({list}, env),std::make_shared<PairValue>(reduce({proc, cdr({list},env)},env),std::make_shared<NilValue>()))},env);
     return result;
@@ -357,8 +357,8 @@ ValuePtr builtin::equal(const std::vector<ValuePtr>& params, EvalEnv& env) {
     else if (Value::isPair(first)) {
         if (Value::isList(first) != Value::isList(second))
             return std::make_shared<BooleanValue>(false);
-        auto listA = Value::toVec(first);
-        auto listB = Value::toVec(second);
+        auto listA = toVec(first);
+        auto listB = toVec(second);
         if (listA.size() != listB.size())
             return std::make_shared<BooleanValue>(false);
         auto pairA = dynamic_cast<PairValue*>(first.get());

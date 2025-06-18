@@ -4,6 +4,7 @@
 #include"builtin.h"
 #include"eval_env.h"
 #include<algorithm>
+#include"utils.hpp"
 std::string Value::toString() const {
     return "";
 }
@@ -166,25 +167,7 @@ bool Value::isInteger(const ValuePtr& v) {
     return ptr->IsInteger();
 }
 
-std::vector<ValuePtr> Value::toVec(const ValuePtr& v) {
-    std::vector<ValuePtr>ans;
-    if (typeid(*v) == typeid(NilValue)) {
-        return ans;
-    }
-    auto pair = dynamic_cast<PairValue*>(v.get());
-    auto current = pair->get_cdr();
-    ans.push_back(pair->get_car());
-    while (true){
-        if (dynamic_cast<NilValue*>(current.get())) {
-            return ans;
-        }
-        if (auto next = dynamic_cast<PairValue*>(current.get())) {
-            ans.push_back(next->get_car());
-            current = next->get_cdr();
-        }
-    }
-    throw SyntaxError("The list is not right.");
-}
+
 std::optional<std::string> Value::asSymbol(const ValuePtr& v) {
     if (auto symbol = dynamic_cast<SymbolValue*>(v.get())) {
         return symbol->asSymbol(v);
@@ -245,8 +228,6 @@ std::string LambdaValue::toString() const {
 }
 ValuePtr LambdaValue::apply(const std::vector<ValuePtr> args) const {
     auto current = parent->createChild(params,args);
-    std::vector<ValuePtr> result;
-    std::ranges::transform(body, std::back_inserter(result),
-                           [current](ValuePtr v) { return current->eval(v); });
+    auto result = current->evalList(vec2pair(body));
     return result[result.size()-1];
 }

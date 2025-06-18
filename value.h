@@ -33,8 +33,7 @@ public:
     static bool isLambda(const ValuePtr& v);
     static bool isBuiltin(const ValuePtr& v);
     static bool isProcedure(const ValuePtr& v);
-    //考虑把这个设为utils.hpp中的内容
-    static std::vector<ValuePtr> toVec(const ValuePtr& v);
+
     //as函数返回需要的值
     virtual std::optional<std::string> asSymbol(const ValuePtr& v);
     virtual double asNumber(const ValuePtr& v) const;
