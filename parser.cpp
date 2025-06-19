@@ -3,25 +3,55 @@
 #include <iostream>
 
 Parser::Parser(std::deque<TokenPtr> tokens) : tokens{std::move(tokens)} {}
-//确保分析完之后没有残余  比如输入 3 2   会报错
+void Parser::checkExtraToken() {
+    if (tokens.size()!=1||tokens.at(0)->getType()!=TokenType::RIGHT_PAREN){
+        throw SyntaxError("The input is not correct.");
+    }
+}
 void Parser::checkNoneToken() {
     if (tokens.size() != 0) {
-        throw SyntaxError("There is extra token。");
+        throw SyntaxError("The input is not correct.");
     }
 }
-//重构 通过一个值和一个lambda表达式的const映射来完成这个函数  这样至少不会违反开闭原则
-//需要添加token类型对应的操作方式在unordered_map中添加即可
 ValuePtr Parser::parse() {
-    if (tokens.empty()) throw SyntaxError("Unexpected EOF");
     auto token = std::move(tokens.front());
     tokens.pop_front();
-    auto it = handlers.find(token->getType());
-    if (it != handlers.end()) {
-        return it->second(this, token);
+    if (token->getType() == TokenType::NUMERIC_LITERAL) {
+        auto value = static_cast<NumericLiteralToken&>(*token).getValue();
+        return std::make_shared<NumericValue>(value);
+    } 
+    else if (token->getType() == TokenType::BOOLEAN_LITERAL) {
+        auto value = static_cast<BooleanLiteralToken&>(*token).getValue();
+        return std::make_shared<BooleanValue>(value);
+    } 
+    else if (token->getType() == TokenType::STRING_LITERAL) {
+        auto value = static_cast<StringLiteralToken&>(*token).getValue();
+        return std::make_shared<StringValue>(value);
+    } 
+    else if (token->getType() == TokenType::IDENTIFIER) {
+        auto name = static_cast<IdentifierToken&>(*token).getName();
+        return std::make_shared<SymbolValue>(name);
+    } 
+    else if (token->getType() == TokenType::LEFT_PAREN) {
+        return this->parseTails();
     }
-    throw SyntaxError("Unsupported token type");
+    else if (token->getType() == TokenType::QUOTE) {
+        return vec2pair({std::make_shared<SymbolValue>("quote"), this->parse()});
+    } 
+    else if (token->getType() == TokenType::QUASIQUOTE) {
+        return vec2pair(
+            {std::make_shared<SymbolValue>("quasiquote"), this->parse()});
+    } 
+    else if (token->getType() == TokenType::UNQUOTE) {
+        return vec2pair(
+            {std::make_shared<SymbolValue>("unquote"), this->parse()});
+    }
+    else if (token->getType() == TokenType::RIGHT_PAREN) {
+        throw SyntaxError("There is extra right paren.");
+    }
+    throw SyntaxError("Undefined token.");
 }
-//分析尾序列 应该不用重构吧）
+
 ValuePtr Parser::parseTails() {
     if (tokens.empty()) {
         throw SyntaxError("Missing ')'");

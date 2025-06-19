@@ -5,27 +5,29 @@
 #include"eval_env.h"
 #include<iostream>
 //使用模板设计模式完成io
-//这里没有用虚析构函数的原因是内容全部委派给智能指针了所以析构函数内无内容
-class Inputer {
+class Input {
 protected:
     std::unique_ptr<std::istream> in;
 public:
-    Inputer(std::istream* in) : in(in) {};
+    Input(std::istream* in) : in(in) {};
+    virtual ~Input();
     void processInput(std::shared_ptr<EvalEnv> env);
     virtual void processOne() = 0;
     virtual void processTwo(std::string result) = 0;
-    static std::unique_ptr<Inputer> parseArgs(int argc, char** argv);
+    static std::unique_ptr<Input> parseArgs(int argc, char** argv);
 };
 
-class ReplInputer : public Inputer {
+class ReplInput : public Input {
 public:
-    ReplInputer(std::istream* in) : Inputer(in) {};
+    ~ReplInput();
+    ReplInput(std::istream* in) : Input(in) {};
     void processOne();
     void processTwo(std::string result);
 };
-class FileInputer : public Inputer {
+class FileInput : public Input {
 public:
-    FileInputer(std::istream* in) : Inputer(in) {};
+    ~FileInput();
+    FileInput(std::istream* in) : Input(in) {};
     void processOne();
     void processTwo(std::string result);
 };

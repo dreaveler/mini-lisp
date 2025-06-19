@@ -20,11 +20,11 @@ struct TestCtx {
 
 
 int main(int argc, char** argv) {
-    //RJSJ_TEST(TestCtx,Lv2,Lv3,Lv4,Lv5,Lv6,Lv7,Lv7Lib,Sicp);
+    RJSJ_TEST(TestCtx,Lv2,Lv3,Lv4,Lv5,Lv6,Lv7,Lv7Lib,Sicp);
     try {
-        auto inputer = Inputer::parseArgs(argc, argv);
+        auto input = Input::parseArgs(argc, argv);
         auto global = EvalEnv::createGlobal();
-        inputer->processInput(global);
+        input->processInput(global);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
