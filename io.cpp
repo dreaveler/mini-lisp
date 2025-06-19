@@ -4,8 +4,7 @@
 #include"parser.h"
 #include<fstream>
 #include<stack>
-//bug：输入3 2是正确的没有报错  需要报错
-//改进思路  tokens记录左右括号是否能配对  缺右括号的话就继续等待输入  缺左括号直接throw错误
+//
 void Input::processInput(std::shared_ptr<EvalEnv> env) {
     std::string line;
     while (true) {
@@ -33,12 +32,11 @@ std::unique_ptr<Input>Input::parseArgs(int argc, char** argv) {
     if (argc != 3 || std::strcmp(argv[1], "-i") != 0) {
         throw SyntaxError("Usage: " + std::string(argv[0]) + " [-i filename]");
     }
-    auto file = new std::ifstream(argv[2]);
+    auto file = std::make_unique<std::ifstream>(argv[2]);
     if (!file->is_open()) {
-        delete file;
         throw SyntaxError("Cannot open file " + std::string(argv[2]));
     }
-    return std::make_unique<FileInput>(file);
+    return std::make_unique<FileInput>(file.release());
 }
 
 void ReplInput::processOne() {
@@ -53,6 +51,4 @@ void FileInput::processTwo(std::string result) {}
 
 Input::~Input() {}
 ReplInput::~ReplInput() {}
-FileInput::~FileInput() {
-    delete in;
-}
+FileInput::~FileInput() {}

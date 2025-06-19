@@ -7,7 +7,7 @@
 //使用模板设计模式完成io
 class Input {
 protected:
-    std::istream* in;
+    std::unique_ptr<std::istream> in;
 public:
     Input(std::istream* in) : in(in) {};
     virtual ~Input();
