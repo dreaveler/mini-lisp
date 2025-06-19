@@ -78,7 +78,7 @@ std::vector<double> builtin::checkAndGetTwoNums(
     }
     const auto& valx = params[0];
     const auto& valy = params[1];
-    if (!valx->isNumber(valx) || (!valy->isNumber(valy))) {
+    if (!Value::isNumber(valx) || (!Value::isNumber(valy))) {
         throw LispError("Cannot operate a non-numeric value.");
     }
     auto y = valy->asNumber(valy);
@@ -88,7 +88,7 @@ std::vector<double> builtin::checkAndGetTwoNums(
 double builtin::checkAndGetOneNum(const std::vector<ValuePtr>& params) {
     CHECKONEPARAM(params);
     auto& param = params[0];
-    if (!param->isNumber(param)) {
+    if (!Value::isNumber(param)) {
         throw LispError("Cannot operate a non-numeric value.");
     }
     auto value = param->asNumber(param);
@@ -102,8 +102,10 @@ int builtin::getOneInteger(const std::vector<ValuePtr>& params) {
     return num;
 }
 std::vector<ValuePtr> builtin::getProcAndList(const std::vector<ValuePtr>& params) {
-    if (params.size() != 2) throw LispError("Should be a proc and a list.");
+    if (params.size() != 2) throw LispError("Should be a procedure and a list.");
     auto& proc = params[0];
+    if (!Value::isProcedure(proc)) throw LispError("The first param should be a procedure.");
+    if (!Value::isList(params[1])) throw LispError("The second param should be a list.");
     return {proc, params[1]};
 }
 
@@ -116,7 +118,7 @@ ValuePtr builtin::apply(const std::vector<ValuePtr>& params, EvalEnv& env) {
 ValuePtr builtin::display(const std::vector<ValuePtr>& params, EvalEnv& env) {
     CHECKONEPARAM(params);
     auto& param = params[0];
-    if (param->isString(param)) {
+    if (Value::isString(param)) {
         std::cout << param->asString(param) << "\n";
         return std::make_shared<NilValue>();
     }
@@ -181,6 +183,7 @@ ValuePtr builtin::cons(const std::vector<ValuePtr>& params, EvalEnv& env) {
 ValuePtr builtin::length(const std::vector<ValuePtr>& params, EvalEnv& env) {
     CHECKONEPARAM(params);
     auto& param = params[0];
+    if (!Value::isList(param)) throw LispError("Should get a list.");
     auto vec = toVec(param);
     return std::make_shared<NumericValue>(vec.size());
 }
@@ -231,7 +234,7 @@ ValuePtr builtin::reduce(const std::vector<ValuePtr>& params, EvalEnv& env) {
 ValuePtr builtin::add(const std::vector<ValuePtr>& params, EvalEnv& env) {
     auto result = 0.0;
     for (auto& i : params) {
-        if (!i->isNumber(i)) {
+        if (!Value::isNumber(i)) {
             throw LispError("Cannot add a non-numeric value.");
         }
         result += i->asNumber(i);
@@ -259,7 +262,7 @@ ValuePtr builtin::minus(const std::vector<ValuePtr>& params, EvalEnv& env) {
 ValuePtr builtin::plus(const std::vector<ValuePtr>& params, EvalEnv& env) {
     auto result = 1.0;
     for (const auto& i : params) {
-        if (!i->isNumber(i)) {
+        if (!Value::isNumber(i)) {
             throw LispError("Cannot plus a non-numeric value.");
         }
         result *= i->asNumber(i);
