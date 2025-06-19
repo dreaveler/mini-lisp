@@ -19,7 +19,7 @@ public:
     virtual ~Value() {};
     //toString用于输出
     virtual std::string toString() const;
-    //bool函数用于判断  且可在内置过程中被调用
+    //bool函数用于判断  且可在内置过程中被调用 可能需要重构一下
     static bool isSelfEvaluating(const ValuePtr& v);
     static bool isAtom(const ValuePtr& v);
     static bool isBoolean(const ValuePtr& v);

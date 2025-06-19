@@ -14,7 +14,7 @@ enum class TokenType {
     QUOTE,
     QUASIQUOTE,
     UNQUOTE,
-    DOT,
+    DOT,    
     BOOLEAN_LITERAL,
     NUMERIC_LITERAL,
     STRING_LITERAL,
