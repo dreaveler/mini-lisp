@@ -3,6 +3,7 @@
 #include"token.h"
 #include"parser.h"
 #include<fstream>
+#include<stack>
 //bug：输入3 2是正确的没有报错  需要报错
 //改进思路  tokens记录左右括号是否能配对  缺右括号的话就继续等待输入  缺左括号直接throw错误
 void Input::processInput(std::shared_ptr<EvalEnv> env) {

@@ -11,11 +11,10 @@ protected:
 public:
     Input(std::istream* in) : in(in) {};
     virtual ~Input();
-    std::string Lisp(std::shared_ptr<EvalEnv> env, std::string line);
     void processInput(std::shared_ptr<EvalEnv> env);
     virtual void processOne() = 0;
     virtual void processTwo(std::string result) = 0;
-    static Input* parseArgs(int argc, char** argv);
+    static std::unique_ptr<Input> parseArgs(int argc, char** argv);
 };
 
 class ReplInput : public Input {
