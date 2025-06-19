@@ -3,21 +3,20 @@
 #include"token.h"
 #include"parser.h"
 #include<fstream>
-
-std::string Input::Lisp(std::shared_ptr<EvalEnv> env, std::string line) {
-    auto tokens = Tokenizer::tokenize(line);
-    Parser parser(std::move(tokens));  // TokenPtr 不支持复制
-    auto value = parser.parse();
-    return env->eval(std::move(value))->toString();
-}
-
+//bug：输入3 2是正确的没有报错  需要报错
+//改进思路  tokens记录左右括号是否能配对  缺右括号的话就继续等待输入  缺左括号直接throw错误
 void Input::processInput(std::shared_ptr<EvalEnv> env) {
     std::string line;
     while (true) {
-        processOne();
-        if (!std::getline(*in, line)) break;
         try {
-            auto result = Lisp(env, line);
+            std::stack<char> parenContainer;  //parenContainer作为局部变量
+            processOne();
+            std::getline(*in, line);
+            auto tokens = Tokenizer::tokenize(line); 
+            Parser parser(std::move(tokens));  // TokenPtr 不支持复制
+            auto value = parser.parse();
+            parser.checkNoneToken(); //检查是否有残余输入
+            auto result = env->eval(std::move(value))->toString();
             processTwo(result);
         } catch (const std::exception& e) {
             std::cerr << "Error: " << e.what() << "\n";
@@ -25,9 +24,9 @@ void Input::processInput(std::shared_ptr<EvalEnv> env) {
     }
 }
 //简单工厂产出  设为静态
-Input* Input::parseArgs(int argc, char** argv) {
+std::unique_ptr<Input>Input::parseArgs(int argc, char** argv) {
     if (argc==1){
-        return new ReplInput(&std::cin);
+        return std::make_unique<ReplInput>(&std::cin);
     }
 
     if (argc != 3 || std::strcmp(argv[1], "-i") != 0) {
@@ -38,7 +37,7 @@ Input* Input::parseArgs(int argc, char** argv) {
         delete file;
         throw SyntaxError("Cannot open file " + std::string(argv[2]));
     }
-    return new FileInput(file);
+    return std::make_unique<FileInput>(file);
 }
 
 void ReplInput::processOne() {
