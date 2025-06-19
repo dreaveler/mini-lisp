@@ -3,11 +3,6 @@
 #include <iostream>
 
 Parser::Parser(std::deque<TokenPtr> tokens) : tokens{std::move(tokens)} {}
-void Parser::checkExtraToken() {
-    if (tokens.size()!=1||tokens.at(0)->getType()!=TokenType::RIGHT_PAREN){
-        throw SyntaxError("The input is not correct.");
-    }
-}
 void Parser::checkNoneToken() {
     if (tokens.size() != 0) {
         throw SyntaxError("The input is not correct.");
@@ -16,40 +11,42 @@ void Parser::checkNoneToken() {
 ValuePtr Parser::parse() {
     auto token = std::move(tokens.front());
     tokens.pop_front();
+    ValuePtr result;
     if (token->getType() == TokenType::NUMERIC_LITERAL) {
         auto value = static_cast<NumericLiteralToken&>(*token).getValue();
-        return std::make_shared<NumericValue>(value);
+        result = std::make_shared<NumericValue>(value);
     } 
     else if (token->getType() == TokenType::BOOLEAN_LITERAL) {
         auto value = static_cast<BooleanLiteralToken&>(*token).getValue();
-        return std::make_shared<BooleanValue>(value);
+        result = std::make_shared<BooleanValue>(value);
     } 
     else if (token->getType() == TokenType::STRING_LITERAL) {
         auto value = static_cast<StringLiteralToken&>(*token).getValue();
-        return std::make_shared<StringValue>(value);
+        result = std::make_shared<StringValue>(value);
     } 
     else if (token->getType() == TokenType::IDENTIFIER) {
         auto name = static_cast<IdentifierToken&>(*token).getName();
-        return std::make_shared<SymbolValue>(name);
+        result = std::make_shared<SymbolValue>(name);
     } 
     else if (token->getType() == TokenType::LEFT_PAREN) {
-        return this->parseTails();
+        result = this->parseTails();
     }
     else if (token->getType() == TokenType::QUOTE) {
-        return vec2pair({std::make_shared<SymbolValue>("quote"), this->parse()});
+        result = vec2pair({std::make_shared<SymbolValue>("quote"), this->parse()});
     } 
     else if (token->getType() == TokenType::QUASIQUOTE) {
-        return vec2pair(
+        result = vec2pair(
             {std::make_shared<SymbolValue>("quasiquote"), this->parse()});
     } 
     else if (token->getType() == TokenType::UNQUOTE) {
-        return vec2pair(
+        result = vec2pair(
             {std::make_shared<SymbolValue>("unquote"), this->parse()});
     }
     else if (token->getType() == TokenType::RIGHT_PAREN) {
         throw SyntaxError("There is extra right paren.");
     }
-    throw SyntaxError("Undefined token.");
+    else throw SyntaxError("Undefined token.");
+    return result;
 }
 
 ValuePtr Parser::parseTails() {
