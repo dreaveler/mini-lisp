@@ -17,8 +17,10 @@ const std::unordered_map<std::string, SpecialFormType*> SPECIAL_FORMS{
     {"let",letForm},       
     {"quasiquote",quasiquoteForm},
     };
-
+    //define特殊形式 
 ValuePtr defineForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
+    if (args.size() == 0)
+        throw LispError("Should get at least one param.");
     if (auto name = args[0]->asSymbol(args[0])) {
         if (args.size() != 2) throw LispError("Should get two param.");
         ValuePtr current_expr = args[1];
@@ -88,6 +90,7 @@ ValuePtr lambdaForm(const std::vector<ValuePtr>& args, EvalEnv& env) {
     if (args.size() < 2){
         throw LispError("Should get more than one param.");
     }
+    if (!Value::isList(args[0])) throw LispError("Define a lambda need the params is a list.");
     auto& params = args[0];
     auto vecOfParams = toVec(params);
     std::vector<std::string>vecStrParams;

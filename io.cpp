@@ -9,11 +9,11 @@ void Inputer::processInput(std::shared_ptr<EvalEnv> env) {
     std::string line;
     while (true) {
         try {
-            std::stack<char> parenContainer;  //parenContainer作为局部变量
             processOne();
             if(!std::getline(*in, line)) break;
             auto code = strip_comment(line);
             auto tokens = Tokenizer::tokenize(code); 
+            if (tokens.size()==0) continue;   //输入空行直接过
             Parser parser(std::move(tokens));  // TokenPtr 不支持复制
             auto value = parser.parse();
             parser.checkNoneToken(); //检查是否有残余输入
@@ -53,7 +53,7 @@ void FileInputer::processTwo(std::string result) {}
 Inputer::~Inputer() {}
 ReplInputer::~ReplInputer() {}
 FileInputer::~FileInputer() {}
-
+//去除单行注释
 std::string Inputer::strip_comment(const std::string& line) {
     auto pos = line.find(';');
     if (pos != std::string::npos) {
