@@ -7,22 +7,24 @@
 #include<stack>
 #include"token.h"
 //使用模板设计模式完成io
-class Input {
+class Inputer {
 protected:
-    std::istream* in;
+    std::unique_ptr<std::istream> in;
 public:
-    Input(std::istream* in) : in(in) {};
-    virtual ~Input();
+    Inputer(std::istream* in) : in(in) {};
+    virtual ~Inputer();
     void processInput(std::shared_ptr<EvalEnv> env);
     virtual void processOneFirstLine() = 0;
     virtual void processOneOtherLine() = 0;
     virtual void processTwo(std::string result) = 0;
+    static std::unique_ptr<Inputer> parseArgs(int argc, char** argv);
+    std::string strip_comment(const std::string& line);
     static std::unique_ptr<Input> parseArgs(int argc, char** argv);
     bool checkParen(const std::deque<TokenPtr>& tokens,
                     std::stack<char> parenContainer);
 };
 
-class ReplInput : public Input {
+class ReplInputer : public Inputer {
 public:
     ~ReplInput();
     ReplInput(std::istream* in) : Input(in) {};
@@ -30,7 +32,7 @@ public:
     void processOneOtherLine();
     void processTwo(std::string result);
 };
-class FileInput : public Input {
+class FileInputer : public Inputer {
 public:
     ~FileInput();
     FileInput(std::istream* in) : Input(in) {};
